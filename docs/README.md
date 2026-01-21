@@ -1,316 +1,139 @@
 # Commit Critic
 
-An AI-powered CLI tool that analyzes git commit messages and helps write better ones.
+> AI-powered CLI that scores your git commits and helps you write better ones.
 
-## Overview
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Commit Critic uses GPT-5.2 to score existing commits and suggest improvements, while learning from your best commits to provide personalized feedback. It supports both local repositories and remote URLs.
+<p align="center">
+  <i>🎬 Cool demo coming soon!</i>
+</p>
 
-## Core Features
+## What It Does
 
-### Two Modes
+Commit Critic analyzes your git history, scores each commit message, and learns from your best ones to suggest improvements—all from the command line.
 
-**`--analyze`** - Score and critique existing commits
-- Works on local repo (default) or any remote Git URL
-- Scores each commit 1-10 with actionable feedback
-- Shows aggregate statistics and patterns
-
-**`--write`** - Help write new commit messages
-- Analyzes your staged changes (`git diff --staged`)
-- Understands the actual code diff
-- Suggests conventional commit messages
-- Interactive accept/edit/regenerate flow
-
-### Memory System
-
-Commit Critic learns from your best commits:
-
-1. **Commit Exemplars** - Stores high-scoring commits (8+) as examples
-2. **Project Conventions** - Auto-detects your project's commit style
-3. **Style Memory** - Embeds commits for semantic similarity search
-
-When suggesting new commits, it retrieves your own best commits as few-shot examples.
-
-### Intelligent Analysis
-
-- **Convention Detection** - Recognizes conventional commits, ticket references, emoji usage
-- **Diff Intelligence** - Understands code changes to generate accurate messages
-- **Streaming Output** - Real-time progress with Rich terminal formatting
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      CLI Layer (Typer)                      │
-│                  --analyze  |  --write                      │
-├─────────────────────────────────────────────────────────────┤
-│                    Agent Layer (OpenAI)                     │
-│  ┌──────────────────┐    ┌──────────────────┐              │
-│  │ Analyzer Agent   │    │ Writer Agent     │              │
-│  │ (score commits)  │    │ (suggest message)│              │
-│  └──────────────────┘    └──────────────────┘              │
-├─────────────────────────────────────────────────────────────┤
-│                    Memory System                            │
-│  ┌─────────────┐  ┌──────────────┐  ┌─────────────────┐    │
-│  │ Style Memory│  │ Project Facts│  │ Commit Exemplars│    │
-│  │ (user prefs)│  │ (conventions)│  │ (best examples) │    │
-│  └─────────────┘  └──────────────┘  └─────────────────┘    │
-├─────────────────────────────────────────────────────────────┤
-│                    Git Operations                           │
-│  [Local Repo] [Remote URL Clone] [Diffs] [Commits]         │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    A[Your Commits] --> B[Commit Critic]
+    B --> C{Mode}
+    C -->|analyze| D[Score & Critique]
+    C -->|write| E[Suggest Messages]
+    D --> F[📊 Actionable Feedback]
+    E --> G[💡 Context-Aware Suggestions]
 ```
 
-## Usage
+## Features
+
+| Mode | What it does |
+|------|--------------|
+| `--analyze` | Score commits 1-10 with specific feedback |
+| `--write` | Generate commit messages from staged changes |
+| `--init` | Learn your style from existing commits |
+
+**Works with:** Local repos • Remote URLs • Any git project
+
+## Quick Start
 
 ```bash
-# Initialize memory by scanning a repo
-critic --init                           # Scan current repo
-critic --init --url https://github.com/org/repo  # Learn from remote
-critic --init -n 100                    # Scan last 100 commits
+# Install
+pip install commit-critic
 
-# Analyze commits
-critic --analyze                        # Local repo, last 20 commits
-critic --analyze -n 50                  # Last 50 commits
-critic --analyze --url https://github.com/steel-dev/steel-browser
+# Set your API key
+export OPENAI_API_KEY="sk-..."
 
-# Write commit messages
-critic --write                          # Suggest for staged changes
+# Analyze your last 20 commits
+critic --analyze
 
-# Utilities
-critic config                           # Show/set config
-critic memory show                      # Show stored exemplars
-critic memory clear                     # Clear memory
+# Get a commit message for staged changes
+critic --write
 ```
 
-## Example Output
+## Usage Examples
 
-### Analyze Mode
+### Analyze Commits
+
+```bash
+critic --analyze                                    # Current repo
+critic --analyze -n 50                              # Last 50 commits
+critic --analyze --url https://github.com/org/repo  # Remote repo
 ```
-$ critic --analyze --url https://github.com/steel-dev/steel-browser
 
-🔍 Cloning repository...
+**Output:**
+```
 📊 Analyzing last 20 commits...
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-💩 COMMITS THAT NEED WORK
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💩 NEEDS WORK
+   "fixed bug" (abc123) — 2/10
+   → Too vague. Try: "fix(auth): resolve token expiration handling"
 
-Commit: "fixed bug" (abc123)
-Score: 2/10
-Issue: Too vague - which bug? What was the fix?
-Better: "fix(auth): resolve token expiration handling"
+✨ WELL WRITTEN  
+   "feat(browser): add stealth mode for automation" (def456) — 9/10
+   → Clear scope, specific action, states purpose
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✨ WELL-WRITTEN COMMITS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Commit: "feat(browser): add stealth mode for automation" (def456)
-Score: 9/10
-Why: Clear scope, specific action, states purpose
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📈 STATS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Average: 6.2/10
-Vague commits: 4 (20%)
+📈 Average: 6.2/10 | Vague commits: 4 (20%)
 ```
 
-### Write Mode
+### Write Commit Messages
+
+```bash
+critic --write   # Analyzes staged changes and suggests a message
 ```
-$ critic --write
 
-📝 Analyzing staged changes...
-   3 files changed (+47 -12 lines)
+**Output:**
+```
+🔍 3 files changed (+47 -12 lines)
 
-🧠 Understanding changes...
-   • auth/token.py: Added error handling
-   • auth/refresh.py: New retry logic
-   • tests/test_auth.py: Edge case coverage
-
-💡 Suggested commit:
-┌──────────────────────────────────────────────
+💡 Suggested:
+┌──────────────────────────────────────────────────
 │ fix(auth): handle token expiration gracefully
 │
-│ - Add specific error handling for expired tokens
-│ - Implement retry logic for refresh failures
+│ - Add error handling for expired tokens
+│ - Implement retry logic for refresh failures  
 │ - Add test coverage for edge cases
-└──────────────────────────────────────────────
+└──────────────────────────────────────────────────
 
 [Enter] Accept  [e] Edit  [r] Regenerate  [q] Quit
 ```
 
-## Tech Stack
+## How It Works
 
-- **Python 3.11+** with Typer + Rich
-- **OpenAI SDK** - GPT-5.2 for reasoning, text-embedding-3-small for memory
-- **GitPython** - Git operations
-- **SQLite** - Local memory storage with embeddings
+<p align="center">
+  <img src="assets/how-it-works.svg" alt="How Commit Critic Works" width="800">
+</p>
 
-## Project Structure
-
-```
-commit_critic/
-├── cli.py              # Typer CLI entry point
-├── config.py           # Settings & API keys
-├── agents/
-│   ├── analyzer.py     # Commit scoring agent
-│   ├── writer.py       # Message suggestion agent
-│   └── prompts.py      # Prompt templates
-├── git/
-│   ├── operations.py   # GitPython: commits, diff
-│   └── remote.py       # URL cloning logic
-├── memory/
-│   ├── store.py        # SQLite + embeddings
-│   └── conventions.py  # Project style detection
-└── output/
-    └── formatter.py    # Rich terminal output
-```
-
-## Implementation Order
-
-> **Note:** Build core functionality first, then add memory features.
-
-### Phase 1: Core CLI + Git (No Memory)
-- Typer CLI skeleton with `--analyze` and `--write` flags
-- Git operations: fetch commits, get staged diff
-- Remote URL cloning (shallow clone to temp dir)
-- Basic GPT-5.2 integration for scoring/writing
-
-### Phase 2: Rich Output
-- Beautiful terminal formatting with Rich
-- Progress indicators and streaming output
-- Color-coded scores and stats
-
-### Phase 3: Memory System (Innovative Features)
-- SQLite store for exemplars
-- OpenAI embeddings for semantic search
-- Convention detection from history
-- `--init` command to seed memory
-- Few-shot prompt injection
+**Memory System:** Commits scoring 8+ are saved as exemplars. When writing new messages, your own best commits are used as few-shot examples for personalized suggestions.
 
 ## Installation
 
-### Using uv (Recommended)
-
 ```bash
-# Install uv if you haven't already
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Clone and install
-git clone https://github.com/jay/commit-critic
-cd commit-critic
-uv sync
-source .venv/bin/activate
-
-# Or install directly
-uv pip install commit-critic
-```
-
-### Using pip
-
-```bash
+# pip
 pip install commit-critic
-```
 
-### Using Docker
+# uv (recommended)
+uv pip install commit-critic
 
-```bash
-# Build
-docker build -t commit-critic .
-
-# Run
-docker run --rm -it \
-  -e OPENAI_API_KEY=$OPENAI_API_KEY \
-  -v $(pwd):/workspace:ro \
-  commit-critic analyze
-```
-
-### From Source (Development)
-
-```bash
+# From source
 git clone https://github.com/jay/commit-critic
-cd commit-critic
-
-# Using uv (recommended)
-make dev
-source .venv/bin/activate
-
-# Or using pip
-python -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
+cd commit-critic && pip install -e .
 ```
 
 ## Configuration
 
-Set your OpenAI API key:
-
 ```bash
-export OPENAI_API_KEY="sk-..."
+export OPENAI_API_KEY="sk-..."   # Required
+critic config                    # Verify setup
+critic memory show               # View stored exemplars
+critic memory clear              # Reset memory
 ```
 
-Verify configuration:
+## Tech Stack
 
-```bash
-critic config
-```
+- **CLI:** Python 3.11+ / Typer / Rich
+- **AI:** OpenAI GPT-5.2 + Embeddings
+- **Git:** GitPython
+- **Storage:** SQLite
 
-## Deployment
+## License
 
-### PyPI Distribution
-
-```bash
-# Build package
-make build
-# or: uv build
-
-# Upload to PyPI
-uv publish
-# or: twine upload dist/*
-```
-
-### Docker Deployment
-
-```bash
-# Build production image
-make docker-build
-
-# Run analysis on a remote repo
-docker run --rm -e OPENAI_API_KEY=$OPENAI_API_KEY \
-  commit-critic analyze --url https://github.com/org/repo
-
-# Using docker-compose
-docker-compose run critic analyze
-```
-
-### CI/CD Integration
-
-```yaml
-# GitHub Actions example
-- name: Analyze commits
-  run: |
-    pip install commit-critic
-    critic analyze -n 10
-  env:
-    OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-```
-
-## Development
-
-```bash
-# Install dev dependencies
-make dev
-
-# Run tests
-make test
-
-# Run linting
-make lint
-
-# Format code
-make format
-
-# Build package
-make build
-```
+MIT
