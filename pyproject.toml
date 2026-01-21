@@ -1,0 +1,130 @@
+[project]
+name = "commit-critic"
+version = "0.1.0"
+description = "AI-powered CLI tool that analyzes git commit messages and helps write better ones"
+readme = "docs/README.md"
+requires-python = ">=3.11,<3.14"
+license = { text = "MIT" }
+authors = [{ name = "Jay" }]
+keywords = ["git", "commit", "ai", "cli", "openai", "gpt"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Version Control :: Git",
+    "Typing :: Typed",
+]
+
+dependencies = [
+    "typer>=0.9.0,<1.0.0",
+    "rich>=13.0.0,<14.0.0",
+    "gitpython>=3.1.0,<4.0.0",
+    "openai>=1.0.0,<2.0.0",
+    "pydantic>=2.0.0,<3.0.0",
+    "numpy>=1.24.0,<3.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+]
+
+[project.scripts]
+critic = "commit_critic.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/jay/commit-critic"
+Documentation = "https://github.com/jay/commit-critic#readme"
+Repository = "https://github.com/jay/commit-critic.git"
+Issues = "https://github.com/jay/commit-critic/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+# Map current directory to commit_critic package
+[tool.hatch.build.targets.wheel.force-include]
+"__init__.py" = "commit_critic/__init__.py"
+"cli.py" = "commit_critic/cli.py"
+"config.py" = "commit_critic/config.py"
+"agents" = "commit_critic/agents"
+"vcs" = "commit_critic/vcs"
+"memory" = "commit_critic/memory"
+"output" = "commit_critic/output"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "*.py",
+    "/agents",
+    "/vcs",
+    "/memory",
+    "/output",
+    "/docs",
+]
+
+# uv configuration
+[tool.uv]
+dev-dependencies = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+]
+
+[tool.uv.pip]
+index-url = "https://pypi.org/simple"
+
+# Ruff configuration (flat layout)
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = [
+    ".venv",
+    "dist",
+    "build",
+    "docs",
+    ".git",
+    "__pycache__",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM"]
+ignore = ["E501"]  # Line length handled by formatter
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+# Pytest configuration
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-v --tb=short"
+
+# MyPy configuration (flat layout)
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+exclude = [
+    "docs",
+    "dist",
+    "build",
+    ".venv",
+]
+
+[[tool.mypy.overrides]]
+module = ["git.*", "numpy.*", "typer.*", "rich.*"]
+ignore_missing_imports = true
