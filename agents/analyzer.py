@@ -122,7 +122,8 @@ class CommitAnalyzer:
         # Count vague and one-word commits
         vague_keywords = {"fix", "update", "change", "stuff", "wip", "misc", "changes"}
         vague_count = sum(
-            1 for m in messages
+            1
+            for m in messages
             if m.lower().strip() in vague_keywords
             or m.lower().startswith("fixed ")
             or m.lower() == "fixed bug"

@@ -108,9 +108,9 @@ class CommitWriter:
 
         # Add context about previous suggestion
         if feedback:
-            user_prompt += f"\n\nPrevious suggestion was: \"{previous_suggestion}\"\nFeedback: {feedback}\nPlease suggest a different message."
+            user_prompt += f'\n\nPrevious suggestion was: "{previous_suggestion}"\n\nUser feedback (prioritize this): {feedback}\n\nGenerate a new message that addresses this feedback.'
         else:
-            user_prompt += f"\n\nPrevious suggestion was: \"{previous_suggestion}\"\nPlease suggest a different message."
+            user_prompt += f'\n\nPrevious suggestion was: "{previous_suggestion}"\nPlease suggest a different message.'
 
         response = self.client.chat.completions.create(
             model=self.settings.model,

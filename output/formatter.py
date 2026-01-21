@@ -81,7 +81,9 @@ class OutputFormatter:
                     f'[bold]"{message}"[/bold] [dim]({result.commit.short_hash})[/dim]\n'
                     f"[{color}]Score: {result.score}/10[/{color}]\n"
                     f"[dim]Issue:[/dim] {result.feedback}\n"
-                    + (f'[green]Better:[/green] "{result.suggestion}"' if result.suggestion else ""),
+                    + (
+                        f'[green]Better:[/green] "{result.suggestion}"' if result.suggestion else ""
+                    ),
                     box=box.ROUNDED,
                     padding=(0, 1),
                 )
@@ -167,10 +169,19 @@ class OutputFormatter:
         self.console.print("[bold]💡 Suggested commit:[/bold]")
 
         # Build the full message display
+        # Check if subject already has the type prefix to avoid duplication
+        subject = suggestion.subject
         if suggestion.scope:
-            header = f"{suggestion.commit_type}({suggestion.scope}): {suggestion.subject}"
+            prefix = f"{suggestion.commit_type}({suggestion.scope}):"
         else:
-            header = f"{suggestion.commit_type}: {suggestion.subject}"
+            prefix = f"{suggestion.commit_type}:"
+
+        if subject.lower().startswith(prefix.lower()):
+            header = subject  # Already has prefix
+        elif subject.lower().startswith(suggestion.commit_type.lower()):
+            header = subject  # Has type but maybe different format
+        else:
+            header = f"{prefix} {subject}"
 
         message_lines = [header]
         if suggestion.body:
@@ -195,10 +206,11 @@ class OutputFormatter:
         """Print the interactive prompt for write mode."""
         self.console.print()
         self.console.print(
-            "[bold][[Enter]][/bold] Accept  "
-            "[bold][[e]][/bold] Edit  "
-            "[bold][[r]][/bold] Regenerate  "
-            "[bold][[q]][/bold] Quit"
+            "[bold]\\[c][/bold] Commit  "
+            "[bold]\\[Enter][/bold] Copy  "
+            "[bold]\\[f][/bold] Feedback  "
+            "[bold]\\[r][/bold] Regenerate  "
+            "[bold]\\[q][/bold] Quit"
         )
 
     def print_no_staged_changes(self) -> None:
