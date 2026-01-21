@@ -8,6 +8,7 @@ from pathlib import Path
 from ..agents.analyzer import CommitAnalyzer, AnalysisResult
 from ..config import get_settings
 from ..vcs.operations import CommitInfo
+from .comparisons import MarketComparator
 from .embeddings import EmbeddingGenerator, format_commit_for_embedding
 from .extractor import (
     AntipatternExtractor,
@@ -85,6 +86,9 @@ class MemorySeeder:
 
         # Embedding generator
         self.embedding_generator = EmbeddingGenerator()
+
+        # Market comparator
+        self.market_comparator = MarketComparator()
 
     def _emit_progress(
         self,
@@ -207,12 +211,34 @@ class MemorySeeder:
             detail=f"Profiled {collaborator_count} contributors",
         )
 
-        # Phase 8: Market comparison (optional, placeholder for now)
+        # Phase 8: Market comparison (optional)
         antipattern_count = self.store.count_antipatterns(repo.id)
         if include_market_comparison:
             self._emit_progress(8, "Market comparison", "started", "Comparing to similar projects...")
-            # TODO: Implement market comparison in comparisons.py
-            self._emit_progress(8, "Market comparison", "done", "Done", detail="Coming soon")
+
+            # Get comparison result
+            comparison = self.market_comparator.get_comparison_result(
+                project_type=dna.project_type,
+                average_score=avg_score,
+                primary_language=dna.primary_language,
+            )
+
+            # Update repository with market data
+            self.store.update_repository_market(
+                repo_id=repo.id,
+                comparison_repos=list(comparison.reference_scores.keys()),
+                industry_percentile=comparison.percentile,
+            )
+
+            # Build detail message
+            if comparison.better_than:
+                detail = f"Better than {', '.join(comparison.better_than[:2])} | Top {comparison.percentile:.0f}%"
+            elif comparison.worse_than:
+                detail = f"Room to grow vs {comparison.worse_than[0]} | Top {comparison.percentile:.0f}%"
+            else:
+                detail = f"Top {comparison.percentile:.0f}%"
+
+            self._emit_progress(8, "Market comparison", "done", "Done", detail=detail)
 
         return SeedingResult(
             repo_id=repo.id,
