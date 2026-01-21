@@ -99,7 +99,7 @@ critic --write   # Analyzes staged changes and suggests a message
 ## How It Works
 
 <p align="center">
-  <img src="assets/how-it-works.svg" alt="How Commit Critic Works" width="800">
+  <img src="docs/assets/how-it-works.svg" alt="How Commit Critic Works" width="800">
 </p>
 
 **Memory System:** Commits scoring 8+ are saved as exemplars. When writing new messages, your own best commits are used as few-shot examples for personalized suggestions.
