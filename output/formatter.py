@@ -169,10 +169,19 @@ class OutputFormatter:
         self.console.print("[bold]💡 Suggested commit:[/bold]")
 
         # Build the full message display
+        # Check if subject already has the type prefix to avoid duplication
+        subject = suggestion.subject
         if suggestion.scope:
-            header = f"{suggestion.commit_type}({suggestion.scope}): {suggestion.subject}"
+            prefix = f"{suggestion.commit_type}({suggestion.scope}):"
         else:
-            header = f"{suggestion.commit_type}: {suggestion.subject}"
+            prefix = f"{suggestion.commit_type}:"
+
+        if subject.lower().startswith(prefix.lower()):
+            header = subject  # Already has prefix
+        elif subject.lower().startswith(suggestion.commit_type.lower()):
+            header = subject  # Has type but maybe different format
+        else:
+            header = f"{prefix} {subject}"
 
         message_lines = [header]
         if suggestion.body:
@@ -197,8 +206,9 @@ class OutputFormatter:
         """Print the interactive prompt for write mode."""
         self.console.print()
         self.console.print(
-            "[bold][[Enter]][/bold] Accept  "
-            "[bold][[e]][/bold] Edit  "
+            "[bold][[c]][/bold] Commit  "
+            "[bold][[Enter]][/bold] Copy  "
+            "[bold][[f]][/bold] Feedback  "
             "[bold][[r]][/bold] Regenerate  "
             "[bold][[q]][/bold] Quit"
         )

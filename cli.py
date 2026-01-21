@@ -137,8 +137,26 @@ def write() -> None:
             console.print("> ", end="")
             choice = input().strip().lower()
 
-            if choice in ("", "y", "yes"):
-                # Accept - copy to clipboard or print for manual use
+            if choice == "c":
+                # Commit directly
+                full_message = suggestion.full_message
+                if suggestion.scope:
+                    full_message = (
+                        f"{suggestion.commit_type}({suggestion.scope}): {suggestion.subject}"
+                    )
+                else:
+                    full_message = f"{suggestion.commit_type}: {suggestion.subject}"
+                if suggestion.body:
+                    full_message += f"\n\n{suggestion.body}"
+
+                console.print()
+                console.print("[dim]Committing...[/dim]")
+                repo.index.commit(full_message)
+                formatter.print_success(f"Committed: {full_message.split(chr(10))[0]}")
+                break
+
+            elif choice in ("", "y", "yes"):
+                # Copy - print for manual use
                 full_message = suggestion.full_message
                 if suggestion.scope:
                     full_message = (
@@ -156,17 +174,19 @@ def write() -> None:
                 console.print('[dim]  git commit -m "<message>"[/dim]')
                 break
 
-            elif choice == "e":
-                # Edit - let user modify
+            elif choice == "f":
+                # Feedback - give feedback to regenerate
                 console.print()
-                console.print("[dim]Enter your edited commit message (single line):[/dim]")
+                console.print("[dim]Enter feedback for improvement:[/dim]")
                 console.print("> ", end="")
-                edited = input().strip()
-                if edited:
+                feedback = input().strip()
+                if feedback:
                     console.print()
-                    formatter.print_success("Your commit message:")
-                    console.print(f"\n[bold]{edited}[/bold]\n")
-                break
+                    console.print("[dim]Regenerating with feedback...[/dim]")
+                    previous = suggestion.full_message
+                    suggestion = writer.regenerate_message(diff, previous, feedback)
+                    formatter.print_suggestion(suggestion)
+                    formatter.print_write_prompt()
 
             elif choice == "r":
                 # Regenerate
@@ -184,7 +204,7 @@ def write() -> None:
                 break
 
             else:
-                console.print("[dim]Invalid choice. Use Enter, e, r, or q.[/dim]")
+                console.print("[dim]Invalid choice. Use c, Enter, f, r, or q.[/dim]")
 
     except GitCommandError as e:
         formatter.print_error(f"Git error: {e}")
