@@ -107,13 +107,19 @@ Respond with JSON only."""
 def format_analyzer_prompt(
     message: str,
     commit_hash: str,
-    files_changed: int,
+    files_changed: int | list[str],
 ) -> str:
     """Format the analyzer user prompt with commit details."""
+    # Handle both int and list for files_changed
+    if isinstance(files_changed, list):
+        files_str = f"{len(files_changed)} ({', '.join(files_changed[:5])}{'...' if len(files_changed) > 5 else ''})"
+    else:
+        files_str = str(files_changed)
+
     return ANALYZER_USER_PROMPT.format(
         message=message,
         commit_hash=commit_hash,
-        files_changed=files_changed,
+        files_changed=files_str,
     )
 
 
@@ -212,7 +218,7 @@ Follow the repository's conventions shown above. Respond with JSON only."""
 def format_memory_analyzer_prompt(
     message: str,
     commit_hash: str,
-    files_changed: int,
+    files_changed: int | list[str],
     author_name: str,
     style_pattern: str,
     uses_scopes: bool = False,
@@ -223,6 +229,12 @@ def format_memory_analyzer_prompt(
     trend: str | None = None,
 ) -> str:
     """Format the memory-aware analyzer prompt."""
+    # Handle both int and list for files_changed
+    if isinstance(files_changed, list):
+        files_str = f"{len(files_changed)} ({', '.join(files_changed[:5])}{'...' if len(files_changed) > 5 else ''})"
+    else:
+        files_str = str(files_changed)
+
     # Build scope info
     scope_info = ""
     if uses_scopes and common_scopes:
@@ -255,7 +267,7 @@ def format_memory_analyzer_prompt(
         commit_hash=commit_hash,
         author_name=author_name,
         message=message,
-        files_changed=files_changed,
+        files_changed=files_str,
         context=context,
     )
 

@@ -68,6 +68,10 @@ class CollaboratorProfiler:
         dir_counts: Counter = Counter()
 
         for commit in commits:
+            # Handle both list and int for files_changed
+            if not isinstance(commit.files_changed, list):
+                continue
+
             for file_path in commit.files_changed:
                 parts = Path(file_path).parts
                 if len(parts) >= 2:

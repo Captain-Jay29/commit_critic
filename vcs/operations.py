@@ -17,7 +17,7 @@ class CommitInfo:
     message: str
     author: str
     date: datetime
-    files_changed: int
+    files_changed: int | list[str]  # Can be int (count) or list of file paths
 
 
 @dataclass
@@ -61,11 +61,11 @@ def get_commits(repo: Repo, count: int = 20) -> list[CommitInfo]:
     commits = []
 
     for commit in repo.iter_commits(max_count=count):
-        # Get number of files changed
+        # Get list of files changed
         try:
-            files_changed = len(commit.stats.files)
+            files_changed = list(commit.stats.files.keys())
         except (GitCommandError, KeyError):
-            files_changed = 0
+            files_changed = []
 
         # Handle message that could be bytes or str
         msg = commit.message

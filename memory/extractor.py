@@ -244,10 +244,12 @@ class DNAExtractor:
         extension_counts: Counter = Counter()
 
         for commit in commits:
-            for file_path in commit.files_changed:
-                ext = Path(file_path).suffix.lower()
-                if ext in LANGUAGE_EXTENSIONS:
-                    extension_counts[ext] += 1
+            # Handle both list and int for files_changed
+            if isinstance(commit.files_changed, list):
+                for file_path in commit.files_changed:
+                    ext = Path(file_path).suffix.lower()
+                    if ext in LANGUAGE_EXTENSIONS:
+                        extension_counts[ext] += 1
 
         if not extension_counts:
             return []

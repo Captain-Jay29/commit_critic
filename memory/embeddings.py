@@ -103,7 +103,7 @@ def format_commit_for_embedding(
     message: str,
     commit_type: str | None = None,
     scope: str | None = None,
-    files_changed: list[str] | None = None,
+    files_changed: list[str] | int | None = None,
 ) -> str:
     """
     Format a commit for embedding generation.
@@ -115,7 +115,7 @@ def format_commit_for_embedding(
         message: Commit message.
         commit_type: Type like "feat", "fix", etc.
         scope: Scope like "auth", "api", etc.
-        files_changed: List of changed file paths.
+        files_changed: List of changed file paths or count.
 
     Returns:
         Formatted text for embedding.
@@ -132,7 +132,7 @@ def format_commit_for_embedding(
     parts.append(f"Message: {message}")
 
     # Add file context if available (just the first few)
-    if files_changed:
+    if files_changed and isinstance(files_changed, list):
         # Extract just filenames for context
         file_names = [f.split("/")[-1] for f in files_changed[:5]]
         parts.append(f"Files: {', '.join(file_names)}")
