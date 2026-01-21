@@ -71,9 +71,9 @@ include = [
     "/docs",
 ]
 
-# uv configuration
-[tool.uv]
-dev-dependencies = [
+# Dependency groups (PEP 735)
+[dependency-groups]
+dev = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.0.0",
@@ -81,6 +81,7 @@ dev-dependencies = [
     "mypy>=1.0.0",
 ]
 
+# uv configuration
 [tool.uv.pip]
 index-url = "https://pypi.org/simple"
 
