@@ -10,14 +10,16 @@ help:  ## Show this help
 # Setup targets
 setup:  ## Initial setup - create venv, install deps, copy .env
 	uv venv
-	uv sync
+	uv sync --all-extras
+	uv pip install -e .
 	@if [ ! -f .env ]; then cp .env.example .env && echo "Created .env from .env.example - please add your API key"; fi
 
 install:  ## Install dependencies with uv
-	uv sync
-
-dev:  ## Install with dev dependencies
 	uv sync --all-extras
+	uv pip install -e .
+
+dev:  ## Install in editable mode (required for local changes)
+	uv pip install -e .
 
 lock:  ## Update lockfile
 	uv lock
@@ -26,14 +28,20 @@ lock:  ## Update lockfile
 run:  ## Run critic CLI (pass ARGS, e.g., make run ARGS="analyze -n 10")
 	$(UV_RUN) critic $(ARGS)
 
-analyze:  ## Run analyze on current repo
-	$(UV_RUN) critic analyze
+analyze:  ## Run analyze on current repo (use N=5 for count)
+	$(UV_RUN) critic analyze -n $(or $(N),20)
+
+analyze-url:  ## Analyze remote repo (use URL=<url> N=10)
+	$(UV_RUN) critic analyze --url $(URL) -n $(or $(N),20)
 
 write:  ## Run write mode for staged changes
 	$(UV_RUN) critic write
 
 config:  ## Show current config
 	$(UV_RUN) critic config
+
+version:  ## Show version
+	$(UV_RUN) critic version
 
 # Development targets
 test:  ## Run tests

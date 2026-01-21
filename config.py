@@ -12,9 +12,7 @@ class Settings(BaseModel):
 
     # OpenAI settings
     openai_api_key: str = Field(default_factory=lambda: os.getenv("OPENAI_API_KEY", ""))
-    openai_project_id: str | None = Field(
-        default_factory=lambda: os.getenv("OPENAI_PROJECT_ID")
-    )
+    openai_project_id: str | None = Field(default_factory=lambda: os.getenv("OPENAI_PROJECT_ID"))
     model: str = Field(default_factory=lambda: os.getenv("OPENAI_MODEL", "gpt-5.2"))
     embedding_model: str = Field(
         default_factory=lambda: os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
