@@ -206,11 +206,11 @@ class OutputFormatter:
         """Print the interactive prompt for write mode."""
         self.console.print()
         self.console.print(
-            "[bold][[c]][/bold] Commit  "
-            "[bold][[Enter]][/bold] Copy  "
-            "[bold][[f]][/bold] Feedback  "
-            "[bold][[r]][/bold] Regenerate  "
-            "[bold][[q]][/bold] Quit"
+            "[bold]\\[c][/bold] Commit  "
+            "[bold]\\[Enter][/bold] Copy  "
+            "[bold]\\[f][/bold] Feedback  "
+            "[bold]\\[r][/bold] Regenerate  "
+            "[bold]\\[q][/bold] Quit"
         )
 
     def print_no_staged_changes(self) -> None:
