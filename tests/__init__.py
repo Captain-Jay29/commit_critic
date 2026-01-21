@@ -1,0 +1,1 @@
+"""Commit Critic test suite."""

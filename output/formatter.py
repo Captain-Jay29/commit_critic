@@ -81,7 +81,9 @@ class OutputFormatter:
                     f'[bold]"{message}"[/bold] [dim]({result.commit.short_hash})[/dim]\n'
                     f"[{color}]Score: {result.score}/10[/{color}]\n"
                     f"[dim]Issue:[/dim] {result.feedback}\n"
-                    + (f'[green]Better:[/green] "{result.suggestion}"' if result.suggestion else ""),
+                    + (
+                        f'[green]Better:[/green] "{result.suggestion}"' if result.suggestion else ""
+                    ),
                     box=box.ROUNDED,
                     padding=(0, 1),
                 )

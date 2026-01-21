@@ -123,6 +123,7 @@ exclude = [
     "dist",
     "build",
     ".venv",
+    "tests",
 ]
 
 [[tool.mypy.overrides]]

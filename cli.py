@@ -2,6 +2,7 @@
 
 from typing import Annotated
 
+import click
 import typer
 from git.exc import GitCommandError, InvalidGitRepositoryError
 from rich.console import Console
@@ -27,8 +28,7 @@ def check_api_key() -> bool:
     settings = get_settings()
     if not settings.validate_api_key():
         formatter.print_error(
-            "OpenAI API key not configured.\n"
-            "Set it via: export OPENAI_API_KEY='sk-...'"
+            "OpenAI API key not configured.\nSet it via: export OPENAI_API_KEY='sk-...'"
         )
         return False
     return True
@@ -62,9 +62,7 @@ def analyze(
             try:
                 repo = get_repo()
             except InvalidGitRepositoryError:
-                formatter.print_error(
-                    "Not a git repository. Use --url to analyze a remote repo."
-                )
+                formatter.print_error("Not a git repository. Use --url to analyze a remote repo.")
                 raise typer.Exit(1) from None
 
         # Get commits
@@ -95,6 +93,9 @@ def analyze(
     except GitCommandError as e:
         formatter.print_error(f"Git error: {e}")
         raise typer.Exit(1) from None
+    except click.exceptions.Exit:
+        # Re-raise typer.Exit (which is click.exceptions.Exit) without catching it
+        raise
     except Exception as e:
         formatter.print_error(f"Unexpected error: {e}")
         raise typer.Exit(1) from None
@@ -140,7 +141,9 @@ def write() -> None:
                 # Accept - copy to clipboard or print for manual use
                 full_message = suggestion.full_message
                 if suggestion.scope:
-                    full_message = f"{suggestion.commit_type}({suggestion.scope}): {suggestion.subject}"
+                    full_message = (
+                        f"{suggestion.commit_type}({suggestion.scope}): {suggestion.subject}"
+                    )
                 else:
                     full_message = f"{suggestion.commit_type}: {suggestion.subject}"
                 if suggestion.body:
@@ -150,7 +153,7 @@ def write() -> None:
                 formatter.print_success("Commit message:")
                 console.print(f"\n[bold]{full_message}[/bold]\n")
                 console.print("[dim]Copy the message above and use:[/dim]")
-                console.print("[dim]  git commit -m \"<message>\"[/dim]")
+                console.print('[dim]  git commit -m "<message>"[/dim]')
                 break
 
             elif choice == "e":
@@ -189,6 +192,9 @@ def write() -> None:
     except KeyboardInterrupt:
         console.print("\n[dim]Cancelled.[/dim]")
         raise typer.Exit(0) from None
+    except click.exceptions.Exit:
+        # Re-raise typer.Exit (which is click.exceptions.Exit) without catching it
+        raise
     except Exception as e:
         formatter.print_error(f"Unexpected error: {e}")
         raise typer.Exit(1) from None
@@ -226,6 +232,7 @@ def config(
 def version() -> None:
     """Show version information."""
     from . import __version__
+
     console.print(f"Commit Critic v{__version__}")
 
 

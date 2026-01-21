@@ -11,12 +11,8 @@ class Settings(BaseModel):
     """Application settings loaded from environment variables."""
 
     # OpenAI settings
-    openai_api_key: str = Field(
-        default_factory=lambda: os.getenv("OPENAI_API_KEY", "")
-    )
-    model: str = Field(
-        default_factory=lambda: os.getenv("OPENAI_MODEL", "gpt-5.2")
-    )
+    openai_api_key: str = Field(default_factory=lambda: os.getenv("OPENAI_API_KEY", ""))
+    model: str = Field(default_factory=lambda: os.getenv("OPENAI_MODEL", "gpt-5.2"))
     embedding_model: str = Field(
         default_factory=lambda: os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
     )
