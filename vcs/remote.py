@@ -142,3 +142,22 @@ def is_valid_git_url(url: str) -> bool:
         "git://",
     )
     return url.startswith(valid_prefixes)
+
+
+def get_repo_name_from_url(url: str) -> str:
+    """
+    Extract the repository name from a git URL.
+
+    Args:
+        url: Git repository URL.
+
+    Returns:
+        Repository name (e.g., "fastapi" from "https://github.com/tiangolo/fastapi").
+    """
+    # Handle both HTTPS and SSH URLs
+    # https://github.com/owner/repo.git -> repo
+    # git@github.com:owner/repo.git -> repo
+    name = url.rstrip("/").split("/")[-1]
+    if name.endswith(".git"):
+        name = name[:-4]
+    return name

@@ -7,7 +7,11 @@ from openai import OpenAI
 
 from ..config import get_settings
 from ..vcs.operations import DiffInfo
-from .prompts import WRITER_SYSTEM_PROMPT, format_writer_prompt
+from .prompts import (
+    WRITER_SYSTEM_PROMPT,
+    format_writer_prompt,
+    format_memory_writer_prompt,
+)
 
 
 @dataclass
@@ -119,6 +123,64 @@ class CommitWriter:
                 {"role": "user", "content": user_prompt},
             ],
             temperature=0.9,  # Higher temperature for variety
+            response_format={"type": "json_object"},
+        )
+
+        content = response.choices[0].message.content
+        if content is None:
+            raise ValueError("No response content from OpenAI")
+        result = json.loads(content)
+
+        return CommitSuggestion(
+            subject=result["subject"],
+            body=result.get("body"),
+            commit_type=result["type"],
+            scope=result.get("scope"),
+            explanation=result["explanation"],
+        )
+
+    def suggest_message_with_memory(
+        self,
+        diff: DiffInfo,
+        style_pattern: str,
+        uses_scopes: bool = False,
+        common_scopes: list[str] | None = None,
+        ticket_pattern: str | None = None,
+        exemplars: list[tuple[str, int]] | None = None,
+    ) -> CommitSuggestion:
+        """
+        Suggest a commit message using repository context and exemplars.
+
+        Args:
+            diff: DiffInfo object with staged changes.
+            style_pattern: Repository's commit style pattern.
+            uses_scopes: Whether the repo uses scopes.
+            common_scopes: Common scopes used in the repo.
+            ticket_pattern: Ticket reference pattern.
+            exemplars: List of (message, score) tuples for few-shot examples.
+
+        Returns:
+            CommitSuggestion with suggested message.
+        """
+        user_prompt = format_memory_writer_prompt(
+            files=diff.files,
+            additions=diff.additions,
+            deletions=diff.deletions,
+            diff_text=diff.diff_text,
+            style_pattern=style_pattern,
+            uses_scopes=uses_scopes,
+            common_scopes=common_scopes,
+            ticket_pattern=ticket_pattern,
+            exemplars=exemplars,
+        )
+
+        response = self.client.chat.completions.create(
+            model=self.settings.model,
+            messages=[
+                {"role": "system", "content": WRITER_SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=0.7,
             response_format={"type": "json_object"},
         )
 
