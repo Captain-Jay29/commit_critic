@@ -38,11 +38,105 @@ flowchart LR
 
 **Works with:** Local repos | Remote URLs | Any git project
 
+## Command Reference
+
+### `critic init`
+Seed memory from repository commits to learn your team's style.
+
+```
+critic init [OPTIONS]
+
+Options:
+  -u, --url TEXT       Remote Git repository URL to seed from
+  -n, --count INTEGER  Number of commits to analyze [default: 100]
+  --no-roasts          Skip extracting roast material
+```
+
+**Examples:**
+```bash
+critic init                                    # Current repo, 100 commits
+critic init -n 200                             # Analyze 200 commits
+critic init --url https://github.com/org/repo  # Learn from remote repo
+critic init --no-roasts                        # Skip humorous roasts
+```
+
+---
+
+### `critic analyze`
+Analyze and score commit messages with personalized feedback.
+
+```
+critic analyze [OPTIONS]
+
+Options:
+  -u, --url TEXT       Remote Git repository URL to analyze
+  -n, --count INTEGER  Number of commits to analyze [default: 20]
+  --no-memory          Skip memory lookup for personalized feedback
+```
+
+**Examples:**
+```bash
+critic analyze                                    # Analyze last 20 commits
+critic analyze -n 50                              # Analyze last 50 commits
+critic analyze --url https://github.com/org/repo  # Analyze remote repo
+critic analyze --no-memory                        # Skip personalization
+```
+
+---
+
+### `critic write`
+Suggest a commit message for your staged changes.
+
+```
+critic write [OPTIONS]
+
+Options:
+  --no-memory    Skip memory lookup for style matching
+```
+
+**Examples:**
+```bash
+critic write              # Suggest message for staged changes
+critic write --no-memory  # Skip using learned style
+```
+
+---
+
+### `critic memory`
+Memory management commands.
+
+```
+critic memory status    # Show what's been learned
+critic memory clear     # Clear all memory data
+```
+
+---
+
+### `critic config`
+Show current configuration.
+
+```
+critic config [OPTIONS]
+
+Options:
+  -s, --show    Show current configuration [default: True]
+```
+
+---
+
+### `critic version`
+Show version information.
+
+```bash
+critic version
+```
+
 ## Quick Start
 
 ```bash
-# Install
-pip install commit-critic
+# Clone and install (see Installation section for details)
+git clone https://github.com/jay/commit-critic && cd commit-critic
+make setup
 
 # Set your API key
 export OPENAI_API_KEY="sk-..."
