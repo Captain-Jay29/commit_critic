@@ -1,5 +1,6 @@
 """Commit Critic CLI using Typer."""
 
+from pathlib import Path
 from typing import Annotated
 
 import click
@@ -10,15 +11,21 @@ from rich.console import Console
 from .agents.analyzer import CommitAnalyzer
 from .agents.writer import CommitWriter
 from .config import get_settings
+from .memory import MemorySeeder, MemoryStore, SeedingProgress
 from .output.formatter import OutputFormatter
 from .vcs.operations import get_commits, get_repo, get_staged_diff
-from .vcs.remote import clone_remote_repo, is_valid_git_url
+from .vcs.remote import clone_remote_repo, get_repo_name_from_url, is_valid_git_url
 
 app = typer.Typer(
     name="critic",
     help="AI-powered git commit message analyzer and writer.",
     no_args_is_help=True,
 )
+
+# Memory subcommand group
+memory_app = typer.Typer(help="Memory management commands.")
+app.add_typer(memory_app, name="memory")
+
 console = Console()
 formatter = OutputFormatter()
 
@@ -218,6 +225,163 @@ def write() -> None:
     except Exception as e:
         formatter.print_error(f"Unexpected error: {e}")
         raise typer.Exit(1) from None
+
+
+@app.command()
+def init(
+    url: Annotated[
+        str | None,
+        typer.Option("--url", "-u", help="Remote Git repository URL to seed from"),
+    ] = None,
+    count: Annotated[
+        int,
+        typer.Option("--count", "-n", help="Number of commits to analyze"),
+    ] = 100,
+    no_roasts: Annotated[
+        bool,
+        typer.Option("--no-roasts", help="Skip extracting roast material"),
+    ] = False,
+) -> None:
+    """Seed memory from repository commits (learn your style)."""
+    if not check_api_key():
+        raise typer.Exit(1)
+
+    try:
+        repo_path: Path | None = None
+
+        # Get repository
+        if url:
+            if not is_valid_git_url(url):
+                formatter.print_error(f"Invalid Git URL: {url}")
+                raise typer.Exit(1)
+
+            formatter.print_seeding_header()
+            formatter.print_seeding_phase(1, "Cloning repository", "started", f"Cloning {url}...")
+            repo = clone_remote_repo(url, depth=count + 10)
+            repo_name = get_repo_name_from_url(url)
+            repo_path = Path(repo.working_dir) if repo.working_dir else None
+            formatter.print_seeding_phase(
+                1, "Cloning repository", "done", f"Done - Cloned {repo_name}"
+            )
+        else:
+            try:
+                repo = get_repo()
+                repo_name = Path(repo.working_dir).name if repo.working_dir else "unknown"
+                repo_path = Path(repo.working_dir) if repo.working_dir else None
+                formatter.print_seeding_header()
+                formatter.print_seeding_phase(
+                    1, "Repository", "done", f"Using local repo: {repo_name}"
+                )
+            except InvalidGitRepositoryError:
+                formatter.print_error("Not a git repository. Use --url to seed from a remote repo.")
+                raise typer.Exit(1) from None
+
+        # Extract commits
+        formatter.print_seeding_phase(2, "Extracting commits", "started", "Extracting commits...")
+        commits = get_commits(repo, count=count)
+        if not commits:
+            formatter.print_error("No commits found in repository.")
+            raise typer.Exit(1)
+
+        # Count unique authors
+        authors = {c.author for c in commits}
+        formatter.print_seeding_phase(
+            2,
+            "Extracting commits",
+            "done",
+            f"Done - Extracted {len(commits)} commits from {len(authors)} contributors",
+        )
+
+        # Create progress callback
+        def on_progress(progress: SeedingProgress) -> None:
+            formatter.print_seeding_phase(
+                progress.phase,
+                progress.phase_name,
+                progress.status,
+                progress.message,
+                progress.detail,
+                progress.progress,
+            )
+
+        # Seed memory
+        seeder = MemorySeeder(on_progress=on_progress)
+        result = seeder.seed(
+            commits=commits,
+            repo_name=repo_name,
+            repo_url=url,
+            repo_path=repo_path,
+            include_roasts=not no_roasts,
+        )
+
+        # Print summary
+        formatter.print_seeding_summary(result)
+
+    except GitCommandError as e:
+        formatter.print_error(f"Git error: {e}")
+        raise typer.Exit(1) from None
+    except click.exceptions.Exit:
+        raise
+    except Exception as e:
+        formatter.print_error(f"Unexpected error: {e}")
+        raise typer.Exit(1) from None
+
+
+@memory_app.command("status")
+def memory_status() -> None:
+    """Show what's been learned."""
+    store = MemoryStore()
+    repos = store.list_repositories()
+
+    if not repos:
+        console.print()
+        console.print("[yellow]No repositories in memory.[/yellow]")
+        console.print("[dim]Run 'critic init' to seed memory from a repository.[/dim]")
+        return
+
+    for repo in repos:
+        collaborators = store.list_collaborators(repo.id)
+        exemplar_count = store.count_exemplars(repo.id)
+        antipattern_count = store.count_antipatterns(repo.id)
+
+        formatter.print_memory_status(
+            repo=repo,
+            collaborators=collaborators,
+            exemplar_count=exemplar_count,
+            antipattern_count=antipattern_count,
+        )
+
+
+@memory_app.command("clear")
+def memory_clear(
+    force: Annotated[
+        bool,
+        typer.Option("--force", "-f", help="Skip confirmation prompt"),
+    ] = False,
+) -> None:
+    """Clear all memory data."""
+    store = MemoryStore()
+    stats = store.get_stats()
+
+    if stats["repositories"] == 0:
+        console.print("[yellow]Memory is already empty.[/yellow]")
+        return
+
+    if not force:
+        console.print()
+        console.print("[bold]Current memory contents:[/bold]")
+        console.print(f"  Repositories: {stats['repositories']}")
+        console.print(f"  Collaborators: {stats['collaborators']}")
+        console.print(f"  Exemplars: {stats['exemplars']}")
+        console.print(f"  Antipatterns: {stats['antipatterns']}")
+        console.print()
+
+        confirm = typer.confirm("Are you sure you want to clear all memory?")
+        if not confirm:
+            console.print("[dim]Cancelled.[/dim]")
+            return
+
+    store.clear_all()
+    formatter.print_success("Memory cleared.")
 
 
 @app.command()

@@ -1,5 +1,8 @@
 """Rich terminal output formatting."""
 
+# Import memory types only when needed to avoid circular imports
+from typing import TYPE_CHECKING
+
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
@@ -9,6 +12,10 @@ from rich.table import Table
 from ..agents.analyzer import AnalysisResult, AnalysisSummary
 from ..agents.writer import CommitSuggestion
 from ..vcs.operations import DiffInfo
+
+if TYPE_CHECKING:
+    from ..memory import Collaborator, Repository
+    from ..memory.seeder import SeedingResult
 
 
 class OutputFormatter:
@@ -244,3 +251,172 @@ class OutputFormatter:
             TaskProgressColumn(),
             console=self.console,
         )
+
+    # ========================================================================
+    # Memory/Init Mode Methods
+    # ========================================================================
+
+    def print_seeding_header(self) -> None:
+        """Print the header for seeding mode."""
+        self.console.print()
+        self.console.print(
+            Panel(
+                "[bold cyan]COMMIT CRITIC - LEARNING MODE[/bold cyan]",
+                box=box.DOUBLE,
+                padding=(0, 2),
+            )
+        )
+        self.console.print()
+
+    def print_seeding_phase(
+        self,
+        phase: int,
+        phase_name: str,
+        status: str,
+        message: str,
+        detail: str | None = None,
+        progress: float | None = None,
+    ) -> None:
+        """Print progress for a seeding phase."""
+        if status == "started":
+            self.console.print(f"[bold][{phase}/8][/bold] {message}")
+        elif status == "progress":
+            # Overwrite line for progress updates
+            if progress is not None:
+                bar_width = 20
+                filled = int((progress / 100) * bar_width)
+                bar = "=" * filled + "-" * (bar_width - filled)
+                self.console.print(f"      [{bar}] {progress:.0f}%", end="\r")
+            else:
+                self.console.print(f"      {message}")
+        elif status == "done":
+            if detail:
+                self.console.print(f"      [green]Done[/green] - {detail}")
+            else:
+                self.console.print("      [green]Done[/green]")
+            self.console.print()
+
+    def print_seeding_summary(self, result: "SeedingResult") -> None:
+        """Print the summary after seeding completes."""
+
+        self.console.print()
+        self.console.print(
+            Panel(
+                "[bold green]MEMORY SEEDED[/bold green]",
+                box=box.DOUBLE,
+                padding=(0, 2),
+            )
+        )
+        self.console.print()
+
+        # Summary table
+        table = Table(show_header=False, box=None, padding=(0, 2))
+        table.add_column("Metric", style="dim")
+        table.add_column("Value", style="bold")
+
+        table.add_row("Repository", result.repo_name)
+        table.add_row("Commits analyzed", str(result.commit_count))
+
+        # Color code average
+        avg = result.average_score
+        if avg <= 4:
+            avg_style = "red"
+        elif avg <= 6:
+            avg_style = "yellow"
+        else:
+            avg_style = "green"
+        table.add_row("Average score", f"[{avg_style}]{avg:.1f}/10[/{avg_style}]")
+
+        table.add_row("Exemplars saved", f"[green]{result.exemplar_count}[/green]")
+        table.add_row("Contributors profiled", str(result.collaborator_count))
+
+        if result.antipattern_count > 0:
+            table.add_row("Roast material", f"[yellow]{result.antipattern_count} patterns[/yellow]")
+
+        self.console.print(table)
+        self.console.print()
+
+        if result.has_roasts:
+            self.console.print("[dim]HALL OF SHAME material collected![/dim]")
+        else:
+            self.console.print("[dim]No roast material - this team is too good![/dim]")
+
+        self.console.print()
+        self.console.print("[bold]Ready![/bold] Try: [cyan]critic analyze[/cyan]")
+
+    def print_memory_status(
+        self,
+        repo: "Repository",
+        collaborators: list["Collaborator"],
+        exemplar_count: int,
+        antipattern_count: int,
+    ) -> None:
+        """Print memory status for a repository."""
+
+        self.console.print()
+        self.console.rule(f"[bold cyan]{repo.name}[/bold cyan]", style="cyan")
+        self.console.print()
+
+        # Codebase DNA section
+        self.console.print("[bold]CODEBASE DNA[/bold]")
+        self.console.print(f"  Type: [cyan]{repo.project_type.value}[/cyan]")
+        if repo.primary_language:
+            self.console.print(f"  Primary Language: [cyan]{repo.primary_language}[/cyan]")
+
+        # Language breakdown
+        if repo.languages:
+            self.console.print("  Languages:")
+            for lang in repo.languages[:5]:
+                bar_width = 20
+                filled = int((lang.percentage / 100) * bar_width)
+                bar = "=" * filled + "-" * (bar_width - filled)
+                self.console.print(f"    {lang.language:12} [{bar}] {lang.percentage:.0f}%")
+
+        if repo.frameworks:
+            self.console.print(f"  Stack: [cyan]{', '.join(repo.frameworks)}[/cyan]")
+
+        self.console.print()
+
+        # Commit style section
+        self.console.print("[bold]COMMIT STYLE[/bold]")
+        self.console.print(f"  Pattern: [cyan]{repo.style_pattern.value}[/cyan]")
+        if repo.uses_scopes and repo.common_scopes:
+            self.console.print(f"  Scopes: [cyan]{', '.join(repo.common_scopes[:5])}[/cyan]")
+        if repo.ticket_pattern:
+            self.console.print(f"  Ticket Pattern: [cyan]{repo.ticket_pattern}[/cyan]")
+
+        self.console.print()
+
+        # Stats section
+        self.console.print("[bold]STATS[/bold]")
+        self.console.print(f"  Exemplars: [green]{exemplar_count}[/green]")
+        self.console.print(f"  Contributors: [cyan]{len(collaborators)}[/cyan]")
+        if antipattern_count > 0:
+            self.console.print(f"  Antipatterns: [yellow]{antipattern_count}[/yellow]")
+
+        self.console.print()
+
+        # Top contributors
+        if collaborators:
+            self.console.print("[bold]TOP CONTRIBUTORS[/bold]")
+            for collab in collaborators[:5]:
+                avg = collab.avg_score
+                if avg is not None:
+                    if avg <= 4:
+                        score_style = "red"
+                    elif avg <= 6:
+                        score_style = "yellow"
+                    else:
+                        score_style = "green"
+                    score_str = f"[{score_style}]{avg:.1f}/10[/{score_style}]"
+                else:
+                    score_str = "[dim]N/A[/dim]"
+
+                self.console.print(f"  {collab.name}: {collab.commit_count} commits, {score_str}")
+                if collab.primary_areas:
+                    self.console.print(
+                        f"    [dim]Areas: {', '.join(collab.primary_areas[:3])}[/dim]"
+                    )
+
+        self.console.print()
+        self.console.print(f"[dim]Seeded: {repo.seeded_at.strftime('%Y-%m-%d %H:%M')}[/dim]")

@@ -107,13 +107,19 @@ Respond with JSON only."""
 def format_analyzer_prompt(
     message: str,
     commit_hash: str,
-    files_changed: int,
+    files_changed: int | list[str],
 ) -> str:
     """Format the analyzer user prompt with commit details."""
+    # Handle both int and list for files_changed
+    if isinstance(files_changed, list):
+        files_str = f"{len(files_changed)} ({', '.join(files_changed[:5])}{'...' if len(files_changed) > 5 else ''})"
+    else:
+        files_str = str(files_changed)
+
     return ANALYZER_USER_PROMPT.format(
         message=message,
         commit_hash=commit_hash,
-        files_changed=files_changed,
+        files_changed=files_str,
     )
 
 
@@ -130,6 +136,188 @@ def format_writer_prompt(
         diff_text = diff_text[:max_diff_length] + "\n... (truncated)"
 
     return WRITER_USER_PROMPT.format(
+        files="\n".join(f"- {f}" for f in files),
+        additions=additions,
+        deletions=deletions,
+        diff_text=diff_text,
+    )
+
+
+# ============================================================================
+# Memory-Aware Prompts
+# ============================================================================
+
+
+MEMORY_ANALYZER_CONTEXT = """
+## Repository Context
+
+This repository uses the following commit style:
+- Pattern: {style_pattern}
+{scope_info}
+{ticket_info}
+
+## Author Context
+
+Author: {author_name}
+- Commits analyzed: {commit_count}
+- Average score: {avg_score}/10
+{trend_info}
+
+When providing feedback, reference the repository's style conventions and the author's history.
+If they have patterns of poor commits, mention it constructively.
+"""
+
+
+MEMORY_ANALYZER_USER_PROMPT = """Score this commit message:
+
+Commit: {commit_hash}
+Author: {author_name}
+Message: "{message}"
+Files changed: {files_changed}
+
+{context}
+
+Respond with JSON only."""
+
+
+MEMORY_WRITER_CONTEXT = """
+## Repository Style Conventions
+
+This repository uses:
+- Style: {style_pattern}
+{scope_info}
+{ticket_info}
+
+## Similar High-Quality Examples from This Repository
+
+{exemplars}
+
+Use these examples as inspiration for style and format.
+"""
+
+
+MEMORY_WRITER_USER_PROMPT = """Analyze these staged changes and suggest a commit message:
+
+{context}
+
+Files changed:
+{files}
+
+Diff summary:
+- {additions} additions
+- {deletions} deletions
+
+Diff content:
+```
+{diff_text}
+```
+
+Follow the repository's conventions shown above. Respond with JSON only."""
+
+
+def format_memory_analyzer_prompt(
+    message: str,
+    commit_hash: str,
+    files_changed: int | list[str],
+    author_name: str,
+    style_pattern: str,
+    uses_scopes: bool = False,
+    common_scopes: list[str] | None = None,
+    ticket_pattern: str | None = None,
+    commit_count: int | None = None,
+    avg_score: float | None = None,
+    trend: str | None = None,
+) -> str:
+    """Format the memory-aware analyzer prompt."""
+    # Handle both int and list for files_changed
+    if isinstance(files_changed, list):
+        files_str = f"{len(files_changed)} ({', '.join(files_changed[:5])}{'...' if len(files_changed) > 5 else ''})"
+    else:
+        files_str = str(files_changed)
+
+    # Build scope info
+    scope_info = ""
+    if uses_scopes and common_scopes:
+        scope_info = f"- Uses scopes: {', '.join(common_scopes[:5])}"
+
+    # Build ticket info
+    ticket_info = ""
+    if ticket_pattern:
+        ticket_info = f"- Ticket pattern: {ticket_pattern}"
+
+    # Build trend info
+    trend_info = ""
+    if trend:
+        trend_info = f"- Trend: {trend}"
+
+    # Build context
+    context = ""
+    if commit_count is not None or avg_score is not None:
+        context = MEMORY_ANALYZER_CONTEXT.format(
+            style_pattern=style_pattern,
+            scope_info=scope_info,
+            ticket_info=ticket_info,
+            author_name=author_name,
+            commit_count=commit_count or "unknown",
+            avg_score=f"{avg_score:.1f}" if avg_score else "N/A",
+            trend_info=trend_info,
+        )
+
+    return MEMORY_ANALYZER_USER_PROMPT.format(
+        commit_hash=commit_hash,
+        author_name=author_name,
+        message=message,
+        files_changed=files_str,
+        context=context,
+    )
+
+
+def format_memory_writer_prompt(
+    files: list[str],
+    additions: int,
+    deletions: int,
+    diff_text: str,
+    style_pattern: str,
+    uses_scopes: bool = False,
+    common_scopes: list[str] | None = None,
+    ticket_pattern: str | None = None,
+    exemplars: list[tuple[str, int]] | None = None,  # [(message, score), ...]
+) -> str:
+    """Format the memory-aware writer prompt with exemplars."""
+    # Truncate diff if too long
+    max_diff_length = 4000
+    if len(diff_text) > max_diff_length:
+        diff_text = diff_text[:max_diff_length] + "\n... (truncated)"
+
+    # Build scope info
+    scope_info = ""
+    if uses_scopes and common_scopes:
+        scope_info = f"- Uses scopes: {', '.join(common_scopes[:5])}"
+
+    # Build ticket info
+    ticket_info = ""
+    if ticket_pattern:
+        ticket_info = f"- Ticket references: {ticket_pattern}"
+
+    # Build exemplars section
+    exemplars_text = ""
+    if exemplars:
+        exemplar_lines = []
+        for msg, score in exemplars[:3]:
+            exemplar_lines.append(f'- "{msg}" (score: {score}/10)')
+        exemplars_text = "\n".join(exemplar_lines)
+    else:
+        exemplars_text = "No exemplars available yet."
+
+    context = MEMORY_WRITER_CONTEXT.format(
+        style_pattern=style_pattern,
+        scope_info=scope_info,
+        ticket_info=ticket_info,
+        exemplars=exemplars_text,
+    )
+
+    return MEMORY_WRITER_USER_PROMPT.format(
+        context=context,
         files="\n".join(f"- {f}" for f in files),
         additions=additions,
         deletions=deletions,

@@ -8,7 +8,11 @@ from openai import OpenAI
 
 from ..config import get_settings
 from ..vcs.operations import CommitInfo
-from .prompts import ANALYZER_SYSTEM_PROMPT, format_analyzer_prompt
+from .prompts import (
+    ANALYZER_SYSTEM_PROMPT,
+    format_analyzer_prompt,
+    format_memory_analyzer_prompt,
+)
 
 
 @dataclass
@@ -138,4 +142,67 @@ class CommitAnalyzer:
             good_commits=sum(1 for s in scores if s >= 7),
             vague_count=vague_count,
             one_word_count=one_word_count,
+        )
+
+    def analyze_commit_with_memory(
+        self,
+        commit: CommitInfo,
+        style_pattern: str,
+        uses_scopes: bool = False,
+        common_scopes: list[str] | None = None,
+        ticket_pattern: str | None = None,
+        author_commit_count: int | None = None,
+        author_avg_score: float | None = None,
+        author_trend: str | None = None,
+    ) -> AnalysisResult:
+        """
+        Analyze a commit with repository and author context.
+
+        Args:
+            commit: CommitInfo object to analyze.
+            style_pattern: Repository's commit style pattern.
+            uses_scopes: Whether the repo uses scopes.
+            common_scopes: Common scopes used in the repo.
+            ticket_pattern: Ticket reference pattern.
+            author_commit_count: Author's total commit count.
+            author_avg_score: Author's average score.
+            author_trend: Author's trend (improving/declining/stable).
+
+        Returns:
+            AnalysisResult with personalized feedback.
+        """
+        user_prompt = format_memory_analyzer_prompt(
+            message=commit.message,
+            commit_hash=commit.short_hash,
+            files_changed=commit.files_changed,
+            author_name=commit.author,
+            style_pattern=style_pattern,
+            uses_scopes=uses_scopes,
+            common_scopes=common_scopes,
+            ticket_pattern=ticket_pattern,
+            commit_count=author_commit_count,
+            avg_score=author_avg_score,
+            trend=author_trend,
+        )
+
+        response = self.client.chat.completions.create(
+            model=self.settings.model,
+            messages=[
+                {"role": "system", "content": ANALYZER_SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=0.3,
+            response_format={"type": "json_object"},
+        )
+
+        content = response.choices[0].message.content
+        if content is None:
+            raise ValueError("No response content from OpenAI")
+        result = json.loads(content)
+
+        return AnalysisResult(
+            commit=commit,
+            score=result["score"],
+            feedback=result["feedback"],
+            suggestion=result.get("suggestion"),
         )
