@@ -149,7 +149,12 @@ def analyze(
 
 
 @app.command()
-def write() -> None:
+def write(
+    no_memory: Annotated[
+        bool,
+        typer.Option("--no-memory", help="Skip memory lookup for style matching"),
+    ] = False,
+) -> None:
     """Suggest a commit message for staged changes."""
     if not check_api_key():
         raise typer.Exit(1)
@@ -171,9 +176,44 @@ def write() -> None:
         # Show diff info
         formatter.print_diff_info(diff)
 
+        # Look up repository in memory (unless --no-memory)
+        repository = None
+        exemplars = None
+        if not no_memory:
+            store = MemoryStore()
+            # Try origin URL first, then repo name
+            try:
+                origin_url = repo.remotes.origin.url if repo.remotes else None
+                if origin_url:
+                    repository = store.get_repository_by_url(origin_url)
+            except (AttributeError, IndexError):
+                pass
+            # Fallback to repo name
+            if not repository and repo.working_dir:
+                repo_name = Path(repo.working_dir).name
+                repository = store.get_repository_by_name(repo_name)
+
+            # Fetch exemplars if repository found
+            if repository:
+                stored_exemplars = store.list_exemplars(repository.id, limit=3)
+                if stored_exemplars:
+                    exemplars = [(e.message, e.score) for e in stored_exemplars]
+
         # Get suggestion
         writer = CommitWriter()
-        suggestion = writer.suggest_message(diff)
+        if repository:
+            console.print(f"[dim]Using memory context for [cyan]{repository.name}[/cyan][/dim]")
+            console.print()
+            suggestion = writer.suggest_message_with_memory(
+                diff=diff,
+                style_pattern=repository.style_pattern.value,
+                uses_scopes=repository.uses_scopes,
+                common_scopes=repository.common_scopes,
+                ticket_pattern=repository.ticket_pattern,
+                exemplars=exemplars,
+            )
+        else:
+            suggestion = writer.suggest_message(diff)
 
         # Display suggestion
         formatter.print_suggestion(suggestion)
