@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 <p align="center">
-  <i>Demo coming soon!</i>
+  <img src="docs/assets/demo.gif" alt="Commit Critic Demo" width="700">
 </p>
 
 ## What It Does
