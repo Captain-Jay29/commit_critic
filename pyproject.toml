@@ -43,10 +43,10 @@ dev = [
 critic = "commit_critic.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/jay/commit-critic"
-Documentation = "https://github.com/jay/commit-critic#readme"
-Repository = "https://github.com/jay/commit-critic.git"
-Issues = "https://github.com/jay/commit-critic/issues"
+Homepage = "https://github.com/Captain-Jay29/commit_critic"
+Documentation = "https://github.com/Captain-Jay29/commit_critic#readme"
+Repository = "https://github.com/Captain-Jay29/commit_critic.git"
+Issues = "https://github.com/Captain-Jay29/commit_critic/issues"
 
 [build-system]
 requires = ["hatchling"]
