@@ -18,7 +18,19 @@ from .schemas import (
 )
 
 # Common conventional commit types
-CONVENTIONAL_TYPES = {"feat", "fix", "docs", "style", "refactor", "test", "chore", "perf", "ci", "build", "revert"}
+CONVENTIONAL_TYPES = {
+    "feat",
+    "fix",
+    "docs",
+    "style",
+    "refactor",
+    "test",
+    "chore",
+    "perf",
+    "ci",
+    "build",
+    "revert",
+}
 
 # Emoji patterns (both :emoji: and unicode)
 EMOJI_PATTERN = re.compile(
@@ -136,7 +148,10 @@ class StyleExtractor:
             msg_lower = msg.lower().strip()
 
             # Check for conventional commits: type(scope): or type:
-            if any(msg_lower.startswith(f"{t}(") or msg_lower.startswith(f"{t}:") for t in CONVENTIONAL_TYPES):
+            if any(
+                msg_lower.startswith(f"{t}(") or msg_lower.startswith(f"{t}:")
+                for t in CONVENTIONAL_TYPES
+            ):
                 conventional_count += 1
 
             # Check for emoji

@@ -102,9 +102,9 @@ class CollaboratorProfiler:
         prompt = f"""Based on this contributor's work, write a one-sentence description of what they work on.
 
 Contributor: {name}
-Primary areas: {', '.join(areas[:5])}
+Primary areas: {", ".join(areas[:5])}
 Recent commits:
-{chr(10).join(f'- {m}' for m in recent_messages[:5])}
+{chr(10).join(f"- {m}" for m in recent_messages[:5])}
 
 Write a brief, professional description like:
 - "Owns authentication and user management"
@@ -130,23 +130,18 @@ Keep it under 50 characters. Just the description, no quotes."""
         patterns = []
 
         # Count WIP commits
-        wip_count = sum(
-            1 for c in commits if "wip" in c.message.lower()
-        )
+        wip_count = sum(1 for c in commits if "wip" in c.message.lower())
         if wip_count >= 5:
             patterns.append(f"{wip_count} WIP commits")
 
         # Count one-word commits
-        one_word_count = sum(
-            1 for c in commits if len(c.message.strip().split()) == 1
-        )
+        one_word_count = sum(1 for c in commits if len(c.message.strip().split()) == 1)
         if one_word_count >= 5:
             patterns.append(f"Champion of one-word commits ({one_word_count} total)")
 
         # Count "fix" only commits
         fix_only_count = sum(
-            1 for c in commits
-            if c.message.lower().strip() in ("fix", "fixed", "fixes")
+            1 for c in commits if c.message.lower().strip() in ("fix", "fixed", "fixes")
         )
         if fix_only_count >= 3:
             patterns.append(f'{fix_only_count} commits called just "fix"')

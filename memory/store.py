@@ -174,9 +174,7 @@ class MemoryStore:
                 raise RuntimeError("Failed to get repository ID")
 
             # Fetch the created row within the same connection
-            row = conn.execute(
-                "SELECT * FROM repositories WHERE id = ?", (repo_id,)
-            ).fetchone()
+            row = conn.execute("SELECT * FROM repositories WHERE id = ?", (repo_id,)).fetchone()
             if row is None:
                 raise RuntimeError("Failed to fetch created repository")
             return self._row_to_repository(row)
@@ -184,9 +182,7 @@ class MemoryStore:
     def get_repository(self, repo_id: int) -> Repository | None:
         """Get a repository by ID."""
         with self._get_connection() as conn:
-            row = conn.execute(
-                "SELECT * FROM repositories WHERE id = ?", (repo_id,)
-            ).fetchone()
+            row = conn.execute("SELECT * FROM repositories WHERE id = ?", (repo_id,)).fetchone()
             if row is None:
                 return None
             return self._row_to_repository(row)
@@ -194,9 +190,7 @@ class MemoryStore:
     def get_repository_by_url(self, url: str) -> Repository | None:
         """Get a repository by URL."""
         with self._get_connection() as conn:
-            row = conn.execute(
-                "SELECT * FROM repositories WHERE url = ?", (url,)
-            ).fetchone()
+            row = conn.execute("SELECT * FROM repositories WHERE url = ?", (url,)).fetchone()
             if row is None:
                 return None
             return self._row_to_repository(row)
@@ -204,9 +198,7 @@ class MemoryStore:
     def get_repository_by_name(self, name: str) -> Repository | None:
         """Get a repository by name."""
         with self._get_connection() as conn:
-            row = conn.execute(
-                "SELECT * FROM repositories WHERE name = ?", (name,)
-            ).fetchone()
+            row = conn.execute("SELECT * FROM repositories WHERE name = ?", (name,)).fetchone()
             if row is None:
                 return None
             return self._row_to_repository(row)
@@ -236,9 +228,7 @@ class MemoryStore:
     def list_repositories(self) -> list[Repository]:
         """List all repositories."""
         with self._get_connection() as conn:
-            rows = conn.execute(
-                "SELECT * FROM repositories ORDER BY seeded_at DESC"
-            ).fetchall()
+            rows = conn.execute("SELECT * FROM repositories ORDER BY seeded_at DESC").fetchall()
             return [self._row_to_repository(row) for row in rows]
 
     def _row_to_repository(self, row: sqlite3.Row) -> Repository:
@@ -255,9 +245,7 @@ class MemoryStore:
         common_scopes = json.loads(common_scopes_json) if common_scopes_json else []
 
         comparison_repos_json = row["comparison_repos_json"]
-        comparison_repos = (
-            json.loads(comparison_repos_json) if comparison_repos_json else []
-        )
+        comparison_repos = json.loads(comparison_repos_json) if comparison_repos_json else []
 
         return Repository(
             id=row["id"],
@@ -306,9 +294,7 @@ class MemoryStore:
                 raise RuntimeError("Failed to get collaborator ID")
 
             # Fetch the created row within the same connection
-            row = conn.execute(
-                "SELECT * FROM collaborators WHERE id = ?", (collab_id,)
-            ).fetchone()
+            row = conn.execute("SELECT * FROM collaborators WHERE id = ?", (collab_id,)).fetchone()
             if row is None:
                 raise RuntimeError("Failed to fetch created collaborator")
             return self._row_to_collaborator(row)
@@ -316,9 +302,7 @@ class MemoryStore:
     def get_collaborator(self, collab_id: int) -> Collaborator | None:
         """Get a collaborator by ID."""
         with self._get_connection() as conn:
-            row = conn.execute(
-                "SELECT * FROM collaborators WHERE id = ?", (collab_id,)
-            ).fetchone()
+            row = conn.execute("SELECT * FROM collaborators WHERE id = ?", (collab_id,)).fetchone()
             if row is None:
                 return None
             return self._row_to_collaborator(row)
@@ -436,9 +420,7 @@ class MemoryStore:
                 raise RuntimeError("Failed to get exemplar ID")
 
             # Fetch the created row within the same connection
-            row = conn.execute(
-                "SELECT * FROM exemplars WHERE id = ?", (exemplar_id,)
-            ).fetchone()
+            row = conn.execute("SELECT * FROM exemplars WHERE id = ?", (exemplar_id,)).fetchone()
             if row is None:
                 raise RuntimeError("Failed to fetch created exemplar")
             return self._row_to_exemplar(row)
@@ -446,9 +428,7 @@ class MemoryStore:
     def get_exemplar(self, exemplar_id: int) -> Exemplar | None:
         """Get an exemplar by ID."""
         with self._get_connection() as conn:
-            row = conn.execute(
-                "SELECT * FROM exemplars WHERE id = ?", (exemplar_id,)
-            ).fetchone()
+            row = conn.execute("SELECT * FROM exemplars WHERE id = ?", (exemplar_id,)).fetchone()
             if row is None:
                 return None
             return self._row_to_exemplar(row)
@@ -571,9 +551,7 @@ class MemoryStore:
                 raise RuntimeError("Failed to get antipattern ID")
 
             # Fetch the created row within the same connection
-            row = conn.execute(
-                "SELECT * FROM antipatterns WHERE id = ?", (ap_id,)
-            ).fetchone()
+            row = conn.execute("SELECT * FROM antipatterns WHERE id = ?", (ap_id,)).fetchone()
             if row is None:
                 raise RuntimeError("Failed to fetch created antipattern")
             return self._row_to_antipattern(row)
@@ -581,9 +559,7 @@ class MemoryStore:
     def get_antipattern(self, ap_id: int) -> Antipattern | None:
         """Get an antipattern by ID."""
         with self._get_connection() as conn:
-            row = conn.execute(
-                "SELECT * FROM antipatterns WHERE id = ?", (ap_id,)
-            ).fetchone()
+            row = conn.execute("SELECT * FROM antipatterns WHERE id = ?", (ap_id,)).fetchone()
             if row is None:
                 return None
             return self._row_to_antipattern(row)
@@ -645,9 +621,7 @@ class MemoryStore:
             repos = conn.execute("SELECT COUNT(*) FROM repositories").fetchone()[0]
             collabs = conn.execute("SELECT COUNT(*) FROM collaborators").fetchone()[0]
             exemplars = conn.execute("SELECT COUNT(*) FROM exemplars").fetchone()[0]
-            antipatterns = conn.execute(
-                "SELECT COUNT(*) FROM antipatterns"
-            ).fetchone()[0]
+            antipatterns = conn.execute("SELECT COUNT(*) FROM antipatterns").fetchone()[0]
             return {
                 "repositories": repos,
                 "collaborators": collabs,

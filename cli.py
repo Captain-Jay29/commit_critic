@@ -260,14 +260,18 @@ def init(
             repo = clone_remote_repo(url, depth=count + 10)
             repo_name = get_repo_name_from_url(url)
             repo_path = Path(repo.working_dir) if repo.working_dir else None
-            formatter.print_seeding_phase(1, "Cloning repository", "done", f"Done - Cloned {repo_name}")
+            formatter.print_seeding_phase(
+                1, "Cloning repository", "done", f"Done - Cloned {repo_name}"
+            )
         else:
             try:
                 repo = get_repo()
                 repo_name = Path(repo.working_dir).name if repo.working_dir else "unknown"
                 repo_path = Path(repo.working_dir) if repo.working_dir else None
                 formatter.print_seeding_header()
-                formatter.print_seeding_phase(1, "Repository", "done", f"Using local repo: {repo_name}")
+                formatter.print_seeding_phase(
+                    1, "Repository", "done", f"Using local repo: {repo_name}"
+                )
             except InvalidGitRepositoryError:
                 formatter.print_error("Not a git repository. Use --url to seed from a remote repo.")
                 raise typer.Exit(1) from None
@@ -282,8 +286,10 @@ def init(
         # Count unique authors
         authors = {c.author for c in commits}
         formatter.print_seeding_phase(
-            2, "Extracting commits", "done",
-            f"Done - Extracted {len(commits)} commits from {len(authors)} contributors"
+            2,
+            "Extracting commits",
+            "done",
+            f"Done - Extracted {len(commits)} commits from {len(authors)} contributors",
         )
 
         # Create progress callback

@@ -412,11 +412,11 @@ class OutputFormatter:
                 else:
                     score_str = "[dim]N/A[/dim]"
 
-                self.console.print(
-                    f"  {collab.name}: {collab.commit_count} commits, {score_str}"
-                )
+                self.console.print(f"  {collab.name}: {collab.commit_count} commits, {score_str}")
                 if collab.primary_areas:
-                    self.console.print(f"    [dim]Areas: {', '.join(collab.primary_areas[:3])}[/dim]")
+                    self.console.print(
+                        f"    [dim]Areas: {', '.join(collab.primary_areas[:3])}[/dim]"
+                    )
 
         self.console.print()
         self.console.print(f"[dim]Seeded: {repo.seeded_at.strftime('%Y-%m-%d %H:%M')}[/dim]")

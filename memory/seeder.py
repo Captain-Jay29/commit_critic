@@ -178,7 +178,11 @@ class MemorySeeder:
         # Phase 5: Analyze commits (score each one)
         self._emit_progress(5, "Analyzing commits", "started", "Analyzing commits...")
         analysis_results = self._analyze_commits(commits, repo.id)
-        avg_score = sum(r.score for r in analysis_results) / len(analysis_results) if analysis_results else 0
+        avg_score = (
+            sum(r.score for r in analysis_results) / len(analysis_results)
+            if analysis_results
+            else 0
+        )
         self._emit_progress(
             5,
             "Analyzing commits",
@@ -214,7 +218,9 @@ class MemorySeeder:
         # Phase 8: Market comparison (optional)
         antipattern_count = self.store.count_antipatterns(repo.id)
         if include_market_comparison:
-            self._emit_progress(8, "Market comparison", "started", "Searching similar projects on GitHub...")
+            self._emit_progress(
+                8, "Market comparison", "started", "Searching similar projects on GitHub..."
+            )
 
             # Get comparison result via GitHub search
             comparison = self.market_comparator.get_comparison_result(

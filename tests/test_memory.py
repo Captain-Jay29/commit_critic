@@ -131,7 +131,9 @@ class TestMemoryStore:
     def test_list_collaborators(self, store):
         """Test listing collaborators for a repository."""
         repo = store.create_repository(RepositoryCreate(name="test-repo"))
-        store.create_collaborator(CollaboratorCreate(repo_id=repo.id, name="Alice", commit_count=50))
+        store.create_collaborator(
+            CollaboratorCreate(repo_id=repo.id, name="Alice", commit_count=50)
+        )
         store.create_collaborator(CollaboratorCreate(repo_id=repo.id, name="Bob", commit_count=30))
 
         collabs = store.list_collaborators(repo.id)
@@ -160,12 +162,12 @@ class TestMemoryStore:
     def test_list_exemplars(self, store):
         """Test listing exemplars for a repository."""
         repo = store.create_repository(RepositoryCreate(name="test-repo"))
-        store.create_exemplar(ExemplarCreate(
-            repo_id=repo.id, commit_hash="abc", message="feat: a", score=9
-        ))
-        store.create_exemplar(ExemplarCreate(
-            repo_id=repo.id, commit_hash="def", message="fix: b", score=8
-        ))
+        store.create_exemplar(
+            ExemplarCreate(repo_id=repo.id, commit_hash="abc", message="feat: a", score=9)
+        )
+        store.create_exemplar(
+            ExemplarCreate(repo_id=repo.id, commit_hash="def", message="fix: b", score=8)
+        )
 
         exemplars = store.list_exemplars(repo.id)
         assert len(exemplars) == 2
@@ -191,9 +193,9 @@ class TestMemoryStore:
         """Test clearing all data."""
         repo = store.create_repository(RepositoryCreate(name="test-repo"))
         store.create_collaborator(CollaboratorCreate(repo_id=repo.id, name="Alice"))
-        store.create_exemplar(ExemplarCreate(
-            repo_id=repo.id, commit_hash="abc", message="test", score=8
-        ))
+        store.create_exemplar(
+            ExemplarCreate(repo_id=repo.id, commit_hash="abc", message="test", score=8)
+        )
 
         stats = store.get_stats()
         assert stats["repositories"] == 1
@@ -208,9 +210,9 @@ class TestMemoryStore:
         """Test that deleting a repository cascades to related data."""
         repo = store.create_repository(RepositoryCreate(name="test-repo"))
         store.create_collaborator(CollaboratorCreate(repo_id=repo.id, name="Alice"))
-        store.create_exemplar(ExemplarCreate(
-            repo_id=repo.id, commit_hash="abc", message="test", score=8
-        ))
+        store.create_exemplar(
+            ExemplarCreate(repo_id=repo.id, commit_hash="abc", message="test", score=8)
+        )
 
         store.delete_repository(repo.id)
 
@@ -277,12 +279,20 @@ class TestStyleExtractor:
         """Test detecting freeform style."""
         commits = [
             CommitInfo(
-                hash="a", short_hash="a", message="fixed the bug",
-                author="A", date=datetime.now(), files_changed=1
+                hash="a",
+                short_hash="a",
+                message="fixed the bug",
+                author="A",
+                date=datetime.now(),
+                files_changed=1,
             ),
             CommitInfo(
-                hash="b", short_hash="b", message="updated tests",
-                author="B", date=datetime.now(), files_changed=1
+                hash="b",
+                short_hash="b",
+                message="updated tests",
+                author="B",
+                date=datetime.now(),
+                files_changed=1,
             ),
         ]
         style = extractor.extract_style(commits)
@@ -300,8 +310,12 @@ class TestAntipatternExtractor:
         """Test detecting WIP chains."""
         commits = [
             CommitInfo(
-                hash=f"h{i}", short_hash=f"h{i}", message="WIP",
-                author="Bob", date=datetime.now(), files_changed=1
+                hash=f"h{i}",
+                short_hash=f"h{i}",
+                message="WIP",
+                author="Bob",
+                date=datetime.now(),
+                files_changed=1,
             )
             for i in range(5)
         ]
@@ -313,8 +327,12 @@ class TestAntipatternExtractor:
         """Test detecting one-word commits."""
         commits = [
             CommitInfo(
-                hash=f"h{i}", short_hash=f"h{i}", message="fix",
-                author="Charlie", date=datetime.now(), files_changed=1
+                hash=f"h{i}",
+                short_hash=f"h{i}",
+                message="fix",
+                author="Charlie",
+                date=datetime.now(),
+                files_changed=1,
             )
             for i in range(5)
         ]
@@ -325,12 +343,20 @@ class TestAntipatternExtractor:
         """Test that good commits don't generate antipatterns."""
         commits = [
             CommitInfo(
-                hash="a", short_hash="a", message="feat(auth): add login",
-                author="Alice", date=datetime.now(), files_changed=1
+                hash="a",
+                short_hash="a",
+                message="feat(auth): add login",
+                author="Alice",
+                date=datetime.now(),
+                files_changed=1,
             ),
             CommitInfo(
-                hash="b", short_hash="b", message="fix(api): handle errors",
-                author="Alice", date=datetime.now(), files_changed=1
+                hash="b",
+                short_hash="b",
+                message="fix(api): handle errors",
+                author="Alice",
+                date=datetime.now(),
+                files_changed=1,
             ),
         ]
         results = extractor.extract_antipatterns(commits)
