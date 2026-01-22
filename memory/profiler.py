@@ -65,7 +65,7 @@ class CollaboratorProfiler:
 
     def _detect_areas(self, commits: list[CommitInfo]) -> list[str]:
         """Detect primary areas of work from commit file paths."""
-        dir_counts: Counter = Counter()
+        dir_counts: Counter[str] = Counter()
 
         for commit in commits:
             # Handle both list and int for files_changed

@@ -213,8 +213,8 @@ def _extract_key_changes(diff_text: str) -> str:
                     key_items.append(f"removed {name}")
 
     # Deduplicate and limit
-    seen = set()
-    unique_items = []
+    seen: set[str] = set()
+    unique_items: list[str] = []
     for item in key_items:
         if item not in seen and len(unique_items) < 10:
             seen.add(item)

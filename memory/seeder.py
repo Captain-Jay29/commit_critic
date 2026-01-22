@@ -5,7 +5,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from ..agents.analyzer import CommitAnalyzer, AnalysisResult
+from ..agents.analyzer import AnalysisResult, CommitAnalyzer
 from ..config import get_settings
 from ..vcs.operations import CommitInfo
 from .comparisons import MarketComparator
@@ -307,7 +307,7 @@ class MemorySeeder:
         embeddings = self.embedding_generator.generate_batch(messages_to_embed)
 
         # Save exemplars
-        for result, embedding in zip(exemplars, embeddings):
+        for result, embedding in zip(exemplars, embeddings, strict=True):
             commit_type, scope, _ = parse_conventional_commit(result.commit.message)
             exemplar_data = ExemplarCreate(
                 repo_id=repo_id,
@@ -398,7 +398,7 @@ class MemorySeeder:
     def _detect_primary_areas(self, commits: list[CommitInfo]) -> list[str]:
         """Detect primary areas of work from commit file paths."""
         # Count directory occurrences
-        dir_counts: Counter = Counter()
+        dir_counts: Counter[str] = Counter()
 
         for commit in commits:
             # Handle both list and int for files_changed

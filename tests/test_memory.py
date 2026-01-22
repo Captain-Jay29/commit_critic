@@ -6,6 +6,12 @@ from pathlib import Path
 
 import pytest
 
+from commit_critic.memory.embeddings import format_commit_for_embedding, format_diff_for_embedding
+from commit_critic.memory.extractor import (
+    AntipatternExtractor,
+    StyleExtractor,
+    parse_conventional_commit,
+)
 from commit_critic.memory.schemas import (
     AntipatternCreate,
     AntipatternType,
@@ -18,10 +24,7 @@ from commit_critic.memory.schemas import (
     StylePattern,
 )
 from commit_critic.memory.store import MemoryStore
-from commit_critic.memory.extractor import StyleExtractor, AntipatternExtractor, parse_conventional_commit
-from commit_critic.memory.embeddings import format_commit_for_embedding, format_diff_for_embedding
 from commit_critic.vcs.operations import CommitInfo
-
 
 # ============================================================================
 # Schema Tests

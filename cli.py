@@ -14,7 +14,7 @@ from .config import get_settings
 from .memory import MemorySeeder, MemoryStore, SeedingProgress
 from .output.formatter import OutputFormatter
 from .vcs.operations import get_commits, get_repo, get_staged_diff
-from .vcs.remote import clone_remote_repo, is_valid_git_url, get_repo_name_from_url
+from .vcs.remote import clone_remote_repo, get_repo_name_from_url, is_valid_git_url
 
 app = typer.Typer(
     name="critic",
@@ -280,7 +280,7 @@ def init(
             raise typer.Exit(1)
 
         # Count unique authors
-        authors = set(c.author for c in commits)
+        authors = {c.author for c in commits}
         formatter.print_seeding_phase(
             2, "Extracting commits", "done",
             f"Done - Extracted {len(commits)} commits from {len(authors)} contributors"

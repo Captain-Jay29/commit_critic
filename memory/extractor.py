@@ -1,6 +1,5 @@
 """Extract style patterns, DNA, and antipatterns from commits."""
 
-import json
 import re
 from collections import Counter
 from pathlib import Path
@@ -189,7 +188,7 @@ class StyleExtractor:
 
     def _detect_ticket_pattern(self, messages: list[str]) -> str | None:
         """Detect the ticket reference pattern used."""
-        for pattern, name in TICKET_PATTERNS:
+        for pattern, _name in TICKET_PATTERNS:
             matches = sum(1 for msg in messages if re.match(pattern, msg, re.IGNORECASE))
             if matches / len(messages) >= 0.2:
                 return pattern
@@ -241,7 +240,7 @@ class DNAExtractor:
 
     def _detect_languages(self, commits: list[CommitInfo]) -> list[LanguageBreakdown]:
         """Detect languages from file changes in commits."""
-        extension_counts: Counter = Counter()
+        extension_counts: Counter[str] = Counter()
 
         for commit in commits:
             # Handle both list and int for files_changed
@@ -255,7 +254,7 @@ class DNAExtractor:
             return []
 
         # Convert to language counts
-        language_counts: Counter = Counter()
+        language_counts: Counter[str] = Counter()
         for ext, count in extension_counts.items():
             lang = LANGUAGE_EXTENSIONS.get(ext, "Unknown")
             language_counts[lang] += count
@@ -301,7 +300,7 @@ class DNAExtractor:
             return ProjectType.UNKNOWN
 
         # Build context for AI
-        lang_str = ", ".join(f"{l.language} ({l.percentage}%)" for l in languages[:5])
+        lang_str = ", ".join(f"{lang.language} ({lang.percentage}%)" for lang in languages[:5])
         framework_str = ", ".join(frameworks) if frameworks else "none detected"
         messages_str = "\n".join(f"- {m}" for m in commit_messages[:10])
 

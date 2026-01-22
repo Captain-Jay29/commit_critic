@@ -9,8 +9,8 @@ from ..config import get_settings
 from ..vcs.operations import DiffInfo
 from .prompts import (
     WRITER_SYSTEM_PROMPT,
-    format_writer_prompt,
     format_memory_writer_prompt,
+    format_writer_prompt,
 )
 
 

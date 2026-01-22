@@ -1,5 +1,8 @@
 """Rich terminal output formatting."""
 
+# Import memory types only when needed to avoid circular imports
+from typing import TYPE_CHECKING
+
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
@@ -9,9 +12,6 @@ from rich.table import Table
 from ..agents.analyzer import AnalysisResult, AnalysisSummary
 from ..agents.writer import CommitSuggestion
 from ..vcs.operations import DiffInfo
-
-# Import memory types only when needed to avoid circular imports
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..memory import Collaborator, Repository
@@ -293,12 +293,11 @@ class OutputFormatter:
             if detail:
                 self.console.print(f"      [green]Done[/green] - {detail}")
             else:
-                self.console.print(f"      [green]Done[/green]")
+                self.console.print("      [green]Done[/green]")
             self.console.print()
 
     def print_seeding_summary(self, result: "SeedingResult") -> None:
         """Print the summary after seeding completes."""
-        from ..memory.seeder import SeedingResult  # Import here to avoid circular
 
         self.console.print()
         self.console.print(
@@ -353,7 +352,6 @@ class OutputFormatter:
         antipattern_count: int,
     ) -> None:
         """Print memory status for a repository."""
-        from ..memory import Collaborator, Repository  # Import here to avoid circular
 
         self.console.print()
         self.console.rule(f"[bold cyan]{repo.name}[/bold cyan]", style="cyan")

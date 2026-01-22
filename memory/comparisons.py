@@ -6,7 +6,6 @@ import httpx
 
 from .schemas import MarketPosition, ProjectType
 
-
 # Map project types to GitHub search terms
 PROJECT_TYPE_KEYWORDS = {
     ProjectType.WEB_FRAMEWORK: "web framework",

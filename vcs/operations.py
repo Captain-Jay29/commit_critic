@@ -63,7 +63,7 @@ def get_commits(repo: Repo, count: int = 20) -> list[CommitInfo]:
     for commit in repo.iter_commits(max_count=count):
         # Get list of files changed
         try:
-            files_changed = list(commit.stats.files.keys())
+            files_changed: list[str] = [str(f) for f in commit.stats.files]
         except (GitCommandError, KeyError):
             files_changed = []
 

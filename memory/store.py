@@ -2,10 +2,10 @@
 
 import json
 import sqlite3
+from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import Generator
 
 import numpy as np
 
@@ -160,7 +160,7 @@ class MemoryStore:
                     data.url,
                     data.name,
                     data.primary_language,
-                    json.dumps([l.model_dump() for l in data.languages]),
+                    json.dumps([lang.model_dump() for lang in data.languages]),
                     json.dumps(data.frameworks),
                     data.project_type.value,
                     data.style_pattern.value,
@@ -246,7 +246,7 @@ class MemoryStore:
         languages_json = row["languages_json"]
         languages = []
         if languages_json:
-            languages = [LanguageBreakdown(**l) for l in json.loads(languages_json)]
+            languages = [LanguageBreakdown(**lang) for lang in json.loads(languages_json)]
 
         frameworks_json = row["frameworks_json"]
         frameworks = json.loads(frameworks_json) if frameworks_json else []
@@ -344,8 +344,8 @@ class MemoryStore:
         roast_patterns: list[str] | None = None,
     ) -> None:
         """Update collaborator fields."""
-        updates = []
-        params: list = []
+        updates: list[str] = []
+        params: list[str | int | float] = []
 
         if commit_count is not None:
             updates.append("commit_count = ?")
@@ -461,7 +461,7 @@ class MemoryStore:
     ) -> list[Exemplar]:
         """List exemplars for a repository."""
         query = "SELECT * FROM exemplars WHERE repo_id = ?"
-        params: list = [repo_id]
+        params: list[int | str] = [repo_id]
 
         if commit_type:
             query += " AND commit_type = ?"
@@ -595,7 +595,7 @@ class MemoryStore:
     ) -> list[Antipattern]:
         """List antipatterns for a repository."""
         query = "SELECT * FROM antipatterns WHERE repo_id = ?"
-        params: list = [repo_id]
+        params: list[int] = [repo_id]
 
         if collaborator_id is not None:
             query += " AND collaborator_id = ?"
@@ -639,7 +639,7 @@ class MemoryStore:
             conn.execute("DELETE FROM collaborators")
             conn.execute("DELETE FROM repositories")
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> dict[str, int]:
         """Get overall statistics."""
         with self._get_connection() as conn:
             repos = conn.execute("SELECT COUNT(*) FROM repositories").fetchone()[0]
