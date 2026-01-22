@@ -214,9 +214,9 @@ class MemorySeeder:
         # Phase 8: Market comparison (optional)
         antipattern_count = self.store.count_antipatterns(repo.id)
         if include_market_comparison:
-            self._emit_progress(8, "Market comparison", "started", "Comparing to similar projects...")
+            self._emit_progress(8, "Market comparison", "started", "Searching similar projects on GitHub...")
 
-            # Get comparison result
+            # Get comparison result via GitHub search
             comparison = self.market_comparator.get_comparison_result(
                 project_type=dna.project_type,
                 average_score=avg_score,
@@ -226,15 +226,14 @@ class MemorySeeder:
             # Update repository with market data
             self.store.update_repository_market(
                 repo_id=repo.id,
-                comparison_repos=list(comparison.reference_scores.keys()),
+                comparison_repos=[r.full_name for r in comparison.similar_repos],
                 industry_percentile=comparison.percentile,
             )
 
             # Build detail message
-            if comparison.better_than:
-                detail = f"Better than {', '.join(comparison.better_than[:2])} | Top {comparison.percentile:.0f}%"
-            elif comparison.worse_than:
-                detail = f"Room to grow vs {comparison.worse_than[0]} | Top {comparison.percentile:.0f}%"
+            if comparison.similar_repos:
+                top_repos = ", ".join(r.name for r in comparison.similar_repos[:2])
+                detail = f"Similar: {top_repos} | Top {comparison.percentile:.0f}%"
             else:
                 detail = f"Top {comparison.percentile:.0f}%"
 
