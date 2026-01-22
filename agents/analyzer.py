@@ -1,8 +1,11 @@
 """Commit analyzer agent using GPT-5.2."""
 
+from __future__ import annotations
+
 import json
 from collections.abc import Generator
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from openai import OpenAI
 
@@ -13,6 +16,10 @@ from .prompts import (
     format_analyzer_prompt,
     format_memory_analyzer_prompt,
 )
+
+if TYPE_CHECKING:
+    from ..memory import MemoryStore
+    from ..memory.schemas import Repository
 
 
 @dataclass
@@ -206,3 +213,42 @@ class CommitAnalyzer:
             feedback=result["feedback"],
             suggestion=result.get("suggestion"),
         )
+
+    def analyze_commits_with_memory(
+        self,
+        commits: list[CommitInfo],
+        repository: Repository,
+        store: MemoryStore,
+    ) -> Generator[AnalysisResult, None, None]:
+        """
+        Analyze multiple commits with repository and author context from memory.
+
+        Args:
+            commits: List of CommitInfo objects to analyze.
+            repository: Repository object with style context.
+            store: MemoryStore for looking up collaborator info.
+
+        Yields:
+            AnalysisResult for each commit with personalized feedback.
+        """
+        for commit in commits:
+            # Look up author in memory
+            collaborator = store.get_collaborator_by_name(repository.id, commit.author)
+
+            # Extract author context if found
+            author_commit_count = None
+            author_avg_score = None
+            if collaborator:
+                author_commit_count = collaborator.commit_count
+                author_avg_score = collaborator.avg_score
+
+            # Use memory-aware analysis
+            yield self.analyze_commit_with_memory(
+                commit=commit,
+                style_pattern=repository.style_pattern.value,
+                uses_scopes=repository.uses_scopes,
+                common_scopes=repository.common_scopes,
+                ticket_pattern=repository.ticket_pattern,
+                author_commit_count=author_commit_count,
+                author_avg_score=author_avg_score,
+            )
