@@ -115,6 +115,8 @@ def analyze(
         results = []
 
         if repository and store:
+            console.print(f"[dim]Using memory context for [cyan]{repository.name}[/cyan][/dim]")
+            console.print()
             # Use memory-aware analysis
             for i, result in enumerate(
                 analyzer.analyze_commits_with_memory(commits, repository, store), 1
