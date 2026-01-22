@@ -244,15 +244,19 @@ The memory system transforms Commit Critic from a stateless tool into a learning
 ## Installation
 
 ```bash
-# pip
-pip install commit-critic
-
-# uv (recommended)
-uv pip install commit-critic
-
-# From source
+# Clone the repository
 git clone https://github.com/jay/commit-critic
-cd commit-critic && pip install -e .
+cd commit-critic
+
+# Using uv (recommended)
+make setup              # Creates venv, installs deps, copies .env.example
+
+# Or manually with uv
+uv venv && uv sync --all-extras && uv pip install -e .
+
+# Or with pip
+python -m venv .venv && source .venv/bin/activate
+pip install -e .
 ```
 
 ## Configuration

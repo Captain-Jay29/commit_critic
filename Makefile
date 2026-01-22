@@ -86,11 +86,11 @@ docker-analyze:  ## Analyze current repo in Docker
 		-w /workspace \
 		commit-critic:latest analyze
 
-# Release targets
+# Release targets (cross-platform sed: use .bak then remove)
 release-patch:  ## Bump patch version and tag
 	@echo "Bumping patch version..."
 	@NEW_VERSION=$$(python -c "v='$(shell grep 'version' pyproject.toml | head -1 | cut -d'\"' -f2)'; parts=v.split('.'); parts[2]=str(int(parts[2])+1); print('.'.join(parts))") && \
-	sed -i '' "s/version = \".*\"/version = \"$$NEW_VERSION\"/" pyproject.toml && \
+	sed -i.bak "s/version = \".*\"/version = \"$$NEW_VERSION\"/" pyproject.toml && rm -f pyproject.toml.bak && \
 	git add pyproject.toml && \
 	git commit -m "chore: bump version to $$NEW_VERSION" && \
 	git tag "v$$NEW_VERSION"
@@ -98,7 +98,7 @@ release-patch:  ## Bump patch version and tag
 release-minor:  ## Bump minor version and tag
 	@echo "Bumping minor version..."
 	@NEW_VERSION=$$(python -c "v='$(shell grep 'version' pyproject.toml | head -1 | cut -d'\"' -f2)'; parts=v.split('.'); parts[1]=str(int(parts[1])+1); parts[2]='0'; print('.'.join(parts))") && \
-	sed -i '' "s/version = \".*\"/version = \"$$NEW_VERSION\"/" pyproject.toml && \
+	sed -i.bak "s/version = \".*\"/version = \"$$NEW_VERSION\"/" pyproject.toml && rm -f pyproject.toml.bak && \
 	git add pyproject.toml && \
 	git commit -m "chore: bump version to $$NEW_VERSION" && \
 	git tag "v$$NEW_VERSION"
