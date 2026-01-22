@@ -135,7 +135,7 @@ critic version
 
 ```bash
 # Clone and install (see Installation section for details)
-git clone https://github.com/Captain-Jay29/commit_critic && cd commit-critic
+git clone https://github.com/Captain-Jay29/commit_critic && cd commit_critic
 make setup
 
 # Set your API key
@@ -340,7 +340,7 @@ The memory system transforms Commit Critic from a stateless tool into a learning
 ```bash
 # Clone the repository
 git clone https://github.com/Captain-Jay29/commit_critic
-cd commit-critic
+cd commit_critic
 
 # Using uv (recommended)
 make setup              # Creates venv, installs deps, copies .env.example
