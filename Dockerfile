@@ -1,5 +1,5 @@
 # Build stage
-FROM python:3.12-slim as builder
+FROM python:3.12-slim AS builder
 
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
@@ -9,9 +9,11 @@ WORKDIR /app
 
 # Copy project files (flat layout)
 COPY pyproject.toml .
+COPY README.md .
 COPY __init__.py .
 COPY cli.py .
 COPY config.py .
+COPY exceptions.py .
 COPY agents/ agents/
 COPY vcs/ vcs/
 COPY memory/ memory/
@@ -23,7 +25,7 @@ ENV PATH="/app/.venv/bin:$PATH"
 RUN uv pip install --no-cache .
 
 # Production stage
-FROM python:3.12-slim as runtime
+FROM python:3.12-slim AS runtime
 
 # Install git (required for GitPython)
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -50,8 +52,8 @@ RUN mkdir -p /home/critic/.commit-critic
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD critic version || exit 1
+    CMD python -m commit_critic.cli version || exit 1
 
-# Default command
-ENTRYPOINT ["critic"]
+# Default command (use python -m to avoid shebang path issues from builder stage)
+ENTRYPOINT ["python", "-m", "commit_critic.cli"]
 CMD ["--help"]
