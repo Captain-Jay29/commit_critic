@@ -51,6 +51,10 @@ def analyze(
         int,
         typer.Option("--count", "-n", help="Number of commits to analyze"),
     ] = 20,
+    no_memory: Annotated[
+        bool,
+        typer.Option("--no-memory", help="Skip memory lookup for personalized feedback"),
+    ] = False,
 ) -> None:
     """Analyze and score commit messages."""
     if not check_api_key():
@@ -81,13 +85,47 @@ def analyze(
         formatter.print_analyzing(len(commits))
         console.print()
 
+        # Look up repository in memory (unless --no-memory)
+        repository = None
+        store = None
+        if not no_memory:
+            store = MemoryStore()
+            # Try to find repo by URL first, then by name
+            if url:
+                repository = store.get_repository_by_url(url)
+                if not repository:
+                    # Try by name extracted from URL
+                    repo_name = get_repo_name_from_url(url)
+                    repository = store.get_repository_by_name(repo_name)
+            else:
+                # For local repos, try origin URL first
+                try:
+                    origin_url = repo.remotes.origin.url if repo.remotes else None
+                    if origin_url:
+                        repository = store.get_repository_by_url(origin_url)
+                except (AttributeError, IndexError):
+                    pass
+                # Fallback to repo name
+                if not repository and repo.working_dir:
+                    repo_name = Path(repo.working_dir).name
+                    repository = store.get_repository_by_name(repo_name)
+
         # Analyze commits
         analyzer = CommitAnalyzer()
         results = []
 
-        for i, result in enumerate(analyzer.analyze_commits(commits), 1):
-            results.append(result)
-            formatter.print_analysis_progress(i, len(commits), result)
+        if repository and store:
+            # Use memory-aware analysis
+            for i, result in enumerate(
+                analyzer.analyze_commits_with_memory(commits, repository, store), 1
+            ):
+                results.append(result)
+                formatter.print_analysis_progress(i, len(commits), result)
+        else:
+            # Fallback to basic analysis
+            for i, result in enumerate(analyzer.analyze_commits(commits), 1):
+                results.append(result)
+                formatter.print_analysis_progress(i, len(commits), result)
 
         # Print results
         formatter.print_poor_commits(results)
